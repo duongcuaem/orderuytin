@@ -1,0 +1,7 @@
+com.example.orderuytin.test.app-androidTest-0 /Users/m/Desktop/orderuytin/android/app/src/androidTest/res
+com.example.orderuytin.test.app-androidTestDebug-1 /Users/m/Desktop/orderuytin/android/app/src/androidTestDebug/res
+com.example.orderuytin.test.app-androidTest-2 /Users/m/Desktop/orderuytin/build/app/generated/res/resValues/androidTest/debug
+com.example.orderuytin.test.app-androidTest-3 /Users/m/Desktop/orderuytin/build/app/generated/res/rs/androidTest/debug
+com.example.orderuytin.test.app-mergeDebugAndroidTestResources-4 /Users/m/Desktop/orderuytin/build/app/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.example.orderuytin.test.app-mergeDebugAndroidTestResources-5 /Users/m/Desktop/orderuytin/build/app/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.example.orderuytin.test.app-merged_res-6 /Users/m/Desktop/orderuytin/build/app/intermediates/merged_res/debugAndroidTest

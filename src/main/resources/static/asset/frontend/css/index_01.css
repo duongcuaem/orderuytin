@@ -1,0 +1,191 @@
+
+body {
+	padding-top: 75px;
+	font-family: "Helvetica Neue",Helvetica,Aria,sans-serif;
+}
+.banner-content {
+   		font-size: 22px;
+   	}
+@media all and (max-width: 1024px) {
+   body {
+   		margin-top: 75px;
+   	}
+}
+@media all and (max-width: 768px) {
+   body {
+   		margin-top: 0px;
+   	}
+   	.banner-content {
+   		font-size: 18px;
+   	}
+}
+.banner {
+	text-align: center;
+	background: transparent;
+	color: white;
+	background:  no-repeat center;
+}
+.banner-content {
+	margin: 150px 0px 150px 0px;
+}
+.banner .head-text {
+	color: inherit;
+}
+.order-source, .content, .info, .contact {
+	text-align: center;
+	padding: 80px 0px 80px 0px;
+	position: inherit;
+	font-size: 18px;
+}
+
+.nav-head {
+	border: 0;
+	border-radius: 0;
+	font-size: 19px;
+	font-family: Arial,sans-serif;
+	min-height: 70px;
+	padding-top: 10px;
+}
+ul.nav {
+	text-align: center;
+}
+.navbar-toggle {
+	padding-top: 14px;
+	padding-bottom: 14px;
+	border-radius: 30px;
+	border: 1px;
+	border-style: solid;
+}
+.navbar-default .navbar-nav > li > a {
+    color: #000080;
+}
+.navbar-default .navbar-nav > li > a:hover {
+    color: #FF8C00;
+}
+.div-decorate {
+	border: 1px solid; 
+	border-radius: 15px;
+	margin: 10px 5px 5px 5px;
+}
+.div-decorate > a {
+	padding: 4px;
+	text-decoration: none;
+	color: inherit;
+}
+.div-decorate > a:hover {
+	color: #999999;
+}
+.banner-content {
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+.broadcast {
+	color: white;
+	text-align: center;
+	font-weight: bold;
+	font-size: 22px;
+	background:  no-repeat top center;
+}
+.img-background-banner {
+	background: url(https://ordertietkiem.com/ordertietkiem/x75.png) repeat;
+	padding: 0px 0px 0px 0px;
+	
+}
+.broadcast-img {
+	background: url(https://ordertietkiem.com/ordertietkiem/x55.png) repeat;
+	padding: 220px 0px 220px 0px;
+}
+.broadcast-content {
+	background: url(https://ordertietkiem.com/ordertietkiem/x55.png) repeat;
+	padding: 50px 20px 50px 20px;
+}
+.rate-info {
+	color: white;
+	background:  no-repeat center fixed;
+	font-size: 22px;
+}
+.rate-img {
+	background: url(https://ordertietkiem.com/ordertietkiem/x35.png) repeat;
+	padding: 50px 0px 120px 0px;
+}
+.head-text {
+	font-size: 36px;
+	padding-bottom: 30px;
+}
+.list-info {
+	list-style-type: none;
+	padding: 0;
+}
+.div-padding {
+	padding: 60px 0px 60px 0px; 
+}
+.no-decorate, .no-decorate:hover, .no-decorate:focus {
+	text-decoration: none;
+}
+.div-box .thumbnail {
+	border-radius: 0px;
+	padding: 20px 0px 20px 0px;
+	box-shadow: 0px 0px 10px 1px #999999;
+}
+.div-box .thumbnail:hover {
+	box-shadow: 0px 0px 10px 1px #dddd00;
+}
+.order-source {
+	background: #F8F8FF;
+}
+.info {
+	padding: 70px 0px 70px 0px;
+	font-size: 20px;
+	
+	
+}
+.head-img {
+	font-size: 20px;
+}
+.order-source .content-text {
+	padding-bottom: 20px;
+}
+footer {
+	background-color: #F5F5F5;
+    color: #000;
+	padding: 50px 0px 30px 0px;
+}
+
+.right-div {
+	
+}
+.img-service img {
+	max-width: 200px;
+	max-height: 300px;
+	padding-bottom: 20px;
+}
+.rate-out {
+	padding-top: 50px;
+}
+.rate-detail {
+	
+}
+.rate-out > .glyphicon {
+	font-size: 55px;
+}
+.rate-detail {
+	font-size: 35px;
+}
+.item-list > a {
+	text-decoration: none;
+	color: inherit;
+	line-height: 1.7;
+}
+.item-list > a:hover {
+	color: #1E90FF;
+}
+.nav-head {
+    min-height: 80px;
+    padding-top: 11px;
+}
+.nav>li>a {
+    padding-right: 12px;
+    padding-left: 10px;
+    font-size: 18px;
+}
