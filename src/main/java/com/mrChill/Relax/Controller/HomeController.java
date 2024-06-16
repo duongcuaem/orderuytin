@@ -4,16 +4,25 @@ package com.mrChill.Relax.Controller;
 import com.mrChill.Relax.Dao.UsersDAO;
 import com.mrChill.Relax.Repository.UsersRepository;
 import com.mrChill.Relax.Service.*;
+import com.mrChill.Relax.entity.User;
+import com.mrChill.Relax.entity.UserProfile;
+import com.mrChill.Relax.entity.UserRegistrationDto;
+import com.mrChill.Relax.serviceBase.UserBaseService;
+import com.mrChill.Relax.serviceBase.UserProfileService;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,6 +47,12 @@ public class HomeController {
 
     @Autowired
     UsersRepository ur;
+
+    @Autowired
+    UserBaseService userBaseService;
+
+    @Autowired
+    UserProfileService userProfileService;
 
 //    @Autowired
 //    PasswordEncoder passwordEncoder;
@@ -85,30 +100,86 @@ public class HomeController {
     @RequestMapping("baogia")
     public String baogia( ){ return "baogia"; }
     @RequestMapping("signup")
-    public String signup( ){ return "signup"; }
+    public String signup(Model model){ 
+        model.addAttribute("userRegistrationDto", new UserRegistrationDto());
+        return "signup"; 
+    }
 
-    @RequestMapping(value="create",method = RequestMethod.POST,consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String create(@Valid @ModelAttribute UsersDAO usersDAO,
-                         RedirectAttributes model)  throws Exception {
+//     @RequestMapping(value="create",method = RequestMethod.POST,consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+//     public String create(@Valid @ModelAttribute UsersDAO usersDAO,
+//                          RedirectAttributes model)  throws Exception {
 
-        // Bước 1: Kiểm tra xem trùng email hay ko
-//        Users userEntity = ur.findFirstByEmail(usersDAO.getEmail());
-        if (ur.existsByEmail(usersDAO.getEmail())) {
-            model.addFlashAttribute("message","Email đã được dùng để đăng ký tài khoản. Quý khách vui lòng sử dụng email khác.");
+//         // Bước 1: Kiểm tra xem trùng email hay ko
+// //        Users userEntity = ur.findFirstByEmail(usersDAO.getEmail());
+//         if (ur.existsByEmail(usersDAO.getEmail())) {
+//             model.addFlashAttribute("message","Email đã được dùng để đăng ký tài khoản. Quý khách vui lòng sử dụng email khác.");
+//             return "redirect:/signup";
+//         }
+//         if(ur.existsByPhone(usersDAO.getPhone())) {
+//             model.addFlashAttribute("message","Số điện thoại đã được dùng để đăng ký tài khoản. Quý khách vui lòng sử dụng email khác.");
+//             return "redirect:/signup";
+//         }
+//         if(!usersDAO.getRePassword().equals(usersDAO.getPassword())) {
+//             model.addFlashAttribute("message","Mật khẩu nhập lại không đúng .Vui lòng nhập đúng mật khẩu 2 lần.");
+//             return "redirect:/signup";
+//         }
+//         // Bước 2: Lưu user vào bảng user
+//         us.createUser(usersDAO);
+//         model.addFlashAttribute("message","Quý khách đã tạo tài khoản thành công.Vui lòng đăng nhập để bắt đầu mua  sắm!!!");
+//         return "redirect:/doLogin" ;
+//     }
+   @PostMapping(value = "/create", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public String register(@ModelAttribute @Valid UserRegistrationDto userRegistrationDto, BindingResult result, RedirectAttributes model) {
+        if (result.hasErrors()) {
+            return "signup";
+        }
+
+        try {
+            User user = userRegistrationDto.getUser();
+            UserProfile userProfile = userRegistrationDto.getUserProfile();
+
+            // Check if passwords match
+            if (!user.getPassword().equals(userRegistrationDto.getRePassword())) {
+                model.addFlashAttribute("message", "Mật khẩu không khớp!!!");
+                return "redirect:/signup";
+            }
+
+            // Encode the user's password
+            user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
+
+            // Check if the username already exists
+            if (userBaseService.existsByUsername(user.getUsername())) {
+                model.addFlashAttribute("message", "Tên tài khoản đã tồn tại!!!");
+                return "redirect:/signup";
+            }
+
+            // Check if the email already exists
+            if (userProfileService.existsByEmail(userProfile.getEmail())) {
+                model.addFlashAttribute("message", "Email đã tồn tại!!!");
+                return "redirect:/signup";
+            }
+
+            // Check if the phone number already exists
+            if (userProfileService.existsByPhone(userProfile.getPhone())) {
+                model.addFlashAttribute("message", "Số điện thoại đã tồn tại!!!");
+                return "redirect:/signup";
+            }
+
+            // Create the user
+            User createdUser = userBaseService.createUser(user);
+
+            // Set the userId for userProfile and save userProfile
+            userProfile.setUserId(createdUser.getId());
+            userProfile.setUsername(createdUser.getUsername());
+            userProfileService.createUserProfile(userProfile);
+
+            model.addFlashAttribute("message", "Quý khách đã tạo tài khoản thành công. Vui lòng đăng nhập để bắt đầu mua sắm!!!");
+            return "redirect:/doLogin";
+
+        } catch (Exception e) {
+            model.addFlashAttribute("message", "Đã xảy ra lỗi khi tạo tài khoản. Vui lòng thử lại.");
             return "redirect:/signup";
         }
-        if(ur.existsByPhone(usersDAO.getPhone())) {
-            model.addFlashAttribute("message","Số điện thoại đã được dùng để đăng ký tài khoản. Quý khách vui lòng sử dụng email khác.");
-            return "redirect:/signup";
-        }
-        if(!usersDAO.getRePassword().equals(usersDAO.getPassword())) {
-            model.addFlashAttribute("message","Mật khẩu nhập lại không đúng .Vui lòng nhập đúng mật khẩu 2 lần.");
-            return "redirect:/signup";
-        }
-        // Bước 2: Lưu user vào bảng user
-        us.createUser(usersDAO);
-        model.addFlashAttribute("message","Quý khách đã tạo tài khoản thành công.Vui lòng đăng nhập để bắt đầu mua  sắm!!!");
-        return "redirect:/doLogin" ;
     }
 
     @RequestMapping("loginFailed")
@@ -176,5 +247,12 @@ public class HomeController {
         return "/backend/home";
     }
 
+    // DuongDx
+    @GetMapping("/loginSuccess")
+    public String userInfo(HttpServletRequest request, Model model) {
+        return "loginSuccess";
+    }
+
+    
 
 }
