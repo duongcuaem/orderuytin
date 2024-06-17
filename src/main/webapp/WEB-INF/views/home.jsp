@@ -19,6 +19,10 @@
     <script src="/asset/gdqc/assets/js/core/jquery.min.js"></script>
     <script src="/asset/gdqc/assets/js/core/bootstrap.min.js"></script>
     <script src="https://kit.fontawesome.com/7fef329ee5.js" crossorigin="anonymous"></script>
+    <!-- Load SocketJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
     <link rel="stylesheet" href="/asset/frontend/css/index_01.css">
     <link rel="shortcut icon" type="image/x-icon" href="/orderuytin/orderuytin.jpg">
 
@@ -33,6 +37,83 @@
         .div-decorate a.cart-icon i {
             padding: 2px 3px 0 0;
         }
+        #user-info {
+            position: relative;
+        }
+
+        #user-info .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        #user-info:hover .dropdown-menu {
+            display: block;
+        }
+
+        #user-info .dropdown-menu li {
+            list-style: none;
+            padding: 5px 0;
+        }
+
+        #user-info .dropdown-menu li a {
+            color: #333;
+            text-decoration: none;
+            padding: 5px 10px;
+            display: block;
+        }
+
+        #user-info .dropdown-menu li a:hover {
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        #notification-icon {
+            position: relative;
+        }
+
+        #notification-icon .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 4px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #notification-icon:hover .dropdown-menu {
+            display: block;
+        }
+
+        #notification-icon .dropdown-menu li {
+            list-style: none;
+            padding: 5px 0;
+        }
+
+        #notification-icon .dropdown-menu li a {
+            color: #333;
+            text-decoration: none;
+            padding: 5px 10px;
+            display: block;
+        }
+
+        #notification-icon .dropdown-menu li a:hover {
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
     </style>
 </head>
 <body class="darkmode">
@@ -53,7 +134,7 @@
                         </a>
                     </div>
 
-                    <!-- Collect the nav links, forms, and other content for toggling -->
+                    <!-- Collect the nav links, forms, and other content for toggling 
                     <div class="collapse navbar-collapse navbar-ex1-collapse">
                         <ul class="nav navbar-nav navbar-right">
                             <li><a class="a-decorate" href="/">Trang chủ</a></li>
@@ -62,7 +143,34 @@
                             <li><a class="brand-logo" href="/signup">Đăng ký</a></li>
                             <li><a class="a-decorate" href="/doLogin">Đăng nhập</a></li>
                         </ul>
-                    </div><!-- /.navbar-collapse -->
+                    </div> /.navbar-collapse -->
+                    <div class="collapse navbar-collapse navbar-ex1-collapse">
+                        <ul class="nav navbar-nav navbar-right">
+                            <li><a class="a-decorate" href="/">Trang chủ</a></li>
+                            <li><a class="a-decorate" href="/baogia">Biểu phí</a></li>
+                            <li><a class="a-decorate" href="/policies">Quy định và Chính sách</a></li>
+                            <li id="user-info" class="dropdown" style="display: none;">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <img id="avatar" src="" alt="Avatar" style="width:40px; height:40px; border-radius:50%;">
+                                    <span id="fullName"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#" onclick="viewProfile()">Profile</a></li>
+                                    <li><a href="#" onclick="logout()">Logout</a></li>
+                                </ul>
+                            </li>
+                            <li id="signup"><a class="brand-logo" href="/signup">Đăng ký</a></li>
+                            <li id="login"><a class="a-decorate" href="/doLogin">Đăng nhập</a></li>
+                            <li id="notification-icon" class="dropdown" style="display: none;">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-bell"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li id="no-notifications" style="text-align: center; color: #999;">No notifications</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>                                      
                 </div>
             </nav>
         </div>
@@ -311,8 +419,6 @@
 
     <!-- Thêm đoạn script mới -->
     <script>
-        let stompClient;
-
         // User Authentication
         const token = localStorage.getItem('token');
         console.log(token);
@@ -336,15 +442,18 @@
                 }
                 let data = await response.json();
                 // Populate user details in profile section
-                // document.getElementById('fullName').textContent = data.fullName || 'N/A';
-                // document.getElementById('avatar').src = data.avatar || 'N/A';
-                // document.getElementById('userId').textContent = data.userId || 'N/A';
-                // document.getElementById('socialcode').textContent = data.socialcode || 'N/A';
-                // document.getElementById('username').textContent = data.username || 'N/A';
-                // document.getElementById('email').textContent = data.email || 'N/A';
-                // document.getElementById('phone').textContent = data.phone || 'N/A';
-                // document.getElementById('address').textContent = data.address || 'N/A';
-                // document.getElementById('description').textContent = data.description || 'N/A';
+                document.getElementById('fullName').textContent = data.fullName || 'N/A';
+                if(data.avatar == null){
+                    document.getElementById('avatar').style.display = 'none'; 
+                }else{
+                    document.getElementById('avatar').src = data.avatar;   
+                }
+                // Show user info and hide signup/login
+                document.getElementById('user-info').style.display = 'flex';
+                document.getElementById('signup').style.display = 'none';
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('notification-icon').style.display = 'block';
+
                 console.log(data)
                 var userItem = 0;
                 // Lưu Id vào storage
@@ -358,11 +467,11 @@
                     }
                 }
                 console.log(userItem);
-               // connect(userItem);
+                connect(userItem);
             } catch (error) {
                 console.error('Error fetching user details:', error);
                 localStorage.removeItem('token');
-                window.location.href = "/dologin";
+                //window.location.href = "/doLogin";
             }
         }
 
@@ -396,36 +505,33 @@
 
 
         // WebSocket Client Setup
-        function connect(userId) {
-            stompClient = new StompJs.Client({
-                brokerURL: 'ws://localhost:8080/ws'
-            });
+        var stompClient = null;
 
-            stompClient.onConnect = (frame) => {
+        function connect() {
+            var socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            console.log("1")
+            stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame);
-                console.log('UserId: ' + userId);
-                console.log('/user/' + userId + '/specific/notifications');
-                // Đăng ký để nhận thông báo từ kênh queue cho người dùng cụ thể (thông báo cá nhân)
-                stompClient.subscribe('/user/specific/notifications', function (notification) {
-                    showNotification(JSON.parse(notification.body));
-                });
+                
                 // Đăng ký để nhận thông báo từ kênh topic (thông báo chung)
                 stompClient.subscribe('/all/notifications', function (notification) {
                     showNotification(JSON.parse(notification.body));
                 });
-            };
+                
+                // Đăng ký để nhận thông báo từ kênh specific cho người dùng cụ thể (thông báo cá nhân)
+                stompClient.subscribe('/user/specific/notifications', function (messageOutput) {
+                    showNotification(JSON.parse(notification.body));
+                });
+            });
+        };
 
-            stompClient.onWebSocketError = (error) => {
-                console.error('Error with websocket', error);
-            };
-
-            stompClient.onStompError = (frame) => {
-                console.error('Broker reported error: ' + frame.headers['message']);
-                console.error('Additional details: ' + frame.body);
-            };
-
-            stompClient.activate();
-        }
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+            console.log("Disconnected");
+        };
 
         // Display notification
         function showNotification(notification) {
@@ -486,6 +592,10 @@
                     console.error("Failed to send notification");
                 }
             });
+        }
+
+        function viewProfile() {
+            window.location.href = "/profile";
         }
 
         // jQuery event handlers

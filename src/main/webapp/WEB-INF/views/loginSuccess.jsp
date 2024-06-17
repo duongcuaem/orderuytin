@@ -7,14 +7,14 @@
 </body>
 <script>
     const token = getParameterByName('token');
-console.log(token)
+    console.log(token)
     if (token != null) {
         // Set token vào bộ nhớ của máy
         localStorage.setItem('token', token);
         //setCookie("token", token, 1);
         console.log("ok đã chạy vào đây");
         // nếu đúng sẽ chạy về trang chủ
-        //window.location.href = "home";
+        window.location.href = "home";
     }
 
     // Hàm để lấy giá trị của một tham số từ URL
