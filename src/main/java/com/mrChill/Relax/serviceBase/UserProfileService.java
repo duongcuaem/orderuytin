@@ -78,7 +78,6 @@ public class UserProfileService {
                 userProfile.setFullName((String) attributes.getOrDefault("name", null));
                 String socialcode = (String) attributes.getOrDefault("sub", attributes.get("id"));
                 userProfile.setSocialcode(socialcode);
-                userProfile.setSocialcode((String) attributes.getOrDefault("sub", null));
                 userProfile.setPhone((String) attributes.getOrDefault("phone_number", null));
                 userProfile.setAddress((String) attributes.getOrDefault("address", null));
                 userProfile.setDescription((String) attributes.getOrDefault("description", null));

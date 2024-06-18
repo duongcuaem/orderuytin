@@ -8,15 +8,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+
 
 import com.mrChill.Relax.entity.Notification;
 import com.mrChill.Relax.serviceBase.NotificationService;
-
 
 @RestController
 public class NotificationController {
@@ -24,10 +21,10 @@ public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
-   @Autowired
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-
+    // Lấy danh sách thông báo của một người nhận cụ thể với phân trang
     @GetMapping("/notifications")
     public Page<Notification> getNotifications(
             @RequestParam String recipient,
@@ -37,6 +34,7 @@ public class NotificationController {
         return notificationService.getNotifications(recipient, pageable);
     }
 
+    // Lấy danh sách thông báo chưa đọc của một người nhận cụ thể với phân trang
     @GetMapping("/notifications/unread")
     public Page<Notification> getUnreadNotifications(
             @RequestParam String recipient,
@@ -46,6 +44,7 @@ public class NotificationController {
         return notificationService.getUnreadNotifications(recipient, pageable);
     }
 
+    // Lấy danh sách thông báo của một người nhận cụ thể trong khoảng thời gian nhất định với phân trang
     @GetMapping("/notifications/by-date")
     public Page<Notification> getNotificationsByDateRange(
             @RequestParam String recipient,
@@ -62,8 +61,9 @@ public class NotificationController {
     public void notifyAllUsers(@RequestBody Notification notification) {
         notification.setType("general"); // Thiết lập loại thông báo là chung
         notification.setStatus("unread"); // Thiết lập trạng thái thông báo là chưa đọc
+        notification.setCreatedAt(new Date());
         // Lưu thông báo vào cơ sở dữ liệu
-        notificationService.saveNotification(notification);
+        notificationService.saveNotification(notification, "general");
         // Gửi thông báo đến tất cả người dùng
         messagingTemplate.convertAndSend("/all/notifications", notification);
     }
@@ -71,10 +71,8 @@ public class NotificationController {
     // Thông báo cho người dùng cụ thể
     @PostMapping("/notify")
     public void notifyUsers(@RequestBody Notification notification, @RequestParam List<String> users) {
-        notification.setType("personal"); // Thiết lập loại thông báo là cá nhân
-        notification.setStatus("unread"); // Thiết lập trạng thái thông báo là chưa đọc
         // Lưu thông báo vào cơ sở dữ liệu
-        notificationService.saveNotification(notification);
+        notificationService.saveNotification(notification, "personal");
         // Gửi thông báo đến từng người dùng
         for (String user : users) {
             messagingTemplate.convertAndSendToUser(user, "/queue/notifications", notification);
@@ -88,8 +86,8 @@ public class NotificationController {
      */
     @PostMapping("/sendPersonalNotification")
     public void sendPersonalNotification(@RequestBody Notification notification, @RequestParam Long userId) {
-        notification.setType("personal");
-        notification.setStatus("unread");
         notificationService.sendPersonalNotification(notification, userId);
+        // Gửi thông báo đến người dùng qua WebSocket
+        messagingTemplate.convertAndSendToUser(notification.getRecipient().toString(), "/specific/notifications", notification);
     }
 }

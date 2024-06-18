@@ -3,13 +3,17 @@ package com.mrChill.Relax.serviceBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import com.mrChill.Relax.entity.Notification;
 import com.mrChill.Relax.repoBase.NotificationRepository;
+import com.mrChill.Relax.security.UserPrincipal;
 
 import java.util.Date;
+import java.util.Map;
 
 @Service
 public class NotificationService {
@@ -17,15 +21,36 @@ public class NotificationService {
     // Tự động liên kết với NotificationRepository
     @Autowired
     private NotificationRepository notificationRepository;
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate; // Thêm phần này để gửi tin nhắn qua WebSocket
-
     /**
      * Phương thức lưu thông báo vào cơ sở dữ liệu
      * @param notification Đối tượng Notification cần lưu
      */
-    public void saveNotification(Notification notification) {
+    public void saveNotification(Notification notification, String type) {
+        // Lấy thông tin người dùng hiện tại
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = "";
+        Long currentUserId = 0L;
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            
+            if (principal instanceof UserPrincipal) {
+                // lấy thông tin tài khoản theo UserId 
+                UserPrincipal userPrincipal = (UserPrincipal) principal;
+                currentUserId = userPrincipal.getUserId();
+                currentUser = userPrincipal.getUsername();
+            }else if (principal instanceof OAuth2User) {
+                OAuth2User oauth2User = (OAuth2User) principal;
+                Map<String, Object> attributes = oauth2User.getAttributes();
+                currentUser = ((String) attributes.getOrDefault("name", null));
+                currentUserId = Long.parseLong((String) attributes.getOrDefault("sub", null));
+            }
+        }
+
+        notification.setType(type); // Thiết lập loại thông báo là cá nhân
+        notification.setStatus("unread"); // Thiết lập trạng thái thông báo là chưa đọc
+        notification.setCreatedAt(new Date());
+        notification.setFromName(currentUser);
+        notification.setCreatedBy(currentUserId);
         notificationRepository.save(notification);
     }
 
@@ -67,9 +92,6 @@ public class NotificationService {
      * @param userId ID của người nhận thông báo
      */
     public void sendPersonalNotification(Notification notification, Long userId) {
-        // Lưu thông báo vào cơ sở dữ liệu
-        saveNotification(notification);
-        // Gửi thông báo đến người dùng qua WebSocket
-        messagingTemplate.convertAndSendToUser(notification.getRecipient().toString(), "/specific/notifications", notification);
+        saveNotification(notification, "personal");
     }
 }
