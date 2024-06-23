@@ -1,6 +1,7 @@
 package com.mrChill.Relax.security;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true) // Bỏ qua các trường không được nhận dạng
 public class UserPrincipal implements UserDetails {
     private Long userId;
     private String username;
@@ -37,7 +39,7 @@ public class UserPrincipal implements UserDetails {
     @JsonCreator
     public UserPrincipal(@JsonProperty("email") String email, @JsonProperty("attributes") Map<String, Object> attributes) {
         this.email = email;
-        this.fullName = (String) attributes.get("name");
+        this.fullName = attributes != null ? (String) attributes.get("name") : null;
         this.attributes = attributes;
     }
 

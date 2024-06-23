@@ -1,18 +1,19 @@
 package com.mrChill.Relax.Controller;
 
 
-import com.mrChill.Relax.Dao.UsersDAO;
 import com.mrChill.Relax.Repository.UsersRepository;
 import com.mrChill.Relax.Service.*;
-import com.mrChill.Relax.entity.User;
-import com.mrChill.Relax.entity.UserProfile;
-import com.mrChill.Relax.entity.UserRegistrationDto;
-import com.mrChill.Relax.serviceBase.UserBaseService;
-import com.mrChill.Relax.serviceBase.UserProfileService;
+import com.mrChill.Relax.entities.Users;
+import com.mrChill.Relax.security.JwtUtil;
+import com.mrChill.Relax.security.UserPrincipal;
+import com.mrChill.Relax.serviceBase.UserService;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,10 +27,15 @@ import javax.validation.Valid;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @Controller// đánh dấu nó là 1 controller
 public class HomeController {
+    
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Autowired
     UsersService us;
 
@@ -49,10 +55,7 @@ public class HomeController {
     UsersRepository ur;
 
     @Autowired
-    UserBaseService userBaseService;
-
-    @Autowired
-    UserProfileService userProfileService;
+    UserService userBaseService;
 
 //    @Autowired
 //    PasswordEncoder passwordEncoder;
@@ -101,7 +104,7 @@ public class HomeController {
     public String baogia( ){ return "baogia"; }
     @RequestMapping("signup")
     public String signup(Model model){ 
-        model.addAttribute("userRegistrationDto", new UserRegistrationDto());
+        model.addAttribute("userRegistrationDto");
         return "signup"; 
     }
 
@@ -129,49 +132,44 @@ public class HomeController {
 //         return "redirect:/doLogin" ;
 //     }
    @PostMapping(value = "/create", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String register(@ModelAttribute @Valid UserRegistrationDto userRegistrationDto, BindingResult result, RedirectAttributes model) {
+    public String register(@ModelAttribute @Valid Users users, BindingResult result, RedirectAttributes model) {
         if (result.hasErrors()) {
             return "signup";
         }
 
         try {
-            User user = userRegistrationDto.getUser();
-            UserProfile userProfile = userRegistrationDto.getUserProfile();
 
             // Check if passwords match
-            if (!user.getPassword().equals(userRegistrationDto.getRePassword())) {
+            if (!users.getPassword().equals(users.getRePassword())) {
                 model.addFlashAttribute("message", "Mật khẩu không khớp!!!");
                 return "redirect:/signup";
             }
 
             // Encode the user's password
-            user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
+            users.setPassword(new BCryptPasswordEncoder().encode(users.getPassword()));
+            users.setRePassword(users.getPassword());
+
 
             // Check if the username already exists
-            if (userBaseService.existsByUsername(user.getUsername())) {
+            if (ur.existsByUserName(users.getUserName())) {
                 model.addFlashAttribute("message", "Tên tài khoản đã tồn tại!!!");
                 return "redirect:/signup";
             }
 
             // Check if the email already exists
-            if (userProfileService.existsByEmail(userProfile.getEmail())) {
+            if (ur.existsByEmail(users.getEmail())) {
                 model.addFlashAttribute("message", "Email đã tồn tại!!!");
                 return "redirect:/signup";
             }
 
             // Check if the phone number already exists
-            if (userProfileService.existsByPhone(userProfile.getPhone())) {
+            if (ur.existsByPhone(users.getPhone())) {
                 model.addFlashAttribute("message", "Số điện thoại đã tồn tại!!!");
                 return "redirect:/signup";
             }
 
             // Create the user
-            User createdUser = userBaseService.createUser(user);
-
-            // Set the userId for userProfile and save userProfile
-            userProfile.setUserId(createdUser.getId());
-            userProfile.setUsername(createdUser.getUsername());
-            userProfileService.createUserProfile(userProfile);
+            userBaseService.createUser(users);
 
             model.addFlashAttribute("message", "Quý khách đã tạo tài khoản thành công. Vui lòng đăng nhập để bắt đầu mua sắm!!!");
             return "redirect:/doLogin";
@@ -199,31 +197,61 @@ public class HomeController {
         return "login";
     }
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @RequestMapping("user/home")
     public String statisticsPage (Model model) throws ParseException {
-        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2023-01-01");
-        Date endDate = java.util.Calendar.getInstance().getTime();
-        String userName = us.currentLoginUser().getUserName();
-
-        model.addAttribute("sumTotalVNUser", os.sumTotalVNUser(userName,startDate,endDate));
-        model.addAttribute("sumTotalCancelVNUser", os.sumTotalCancelVNUser(userName,startDate,endDate));
-        model.addAttribute("sumTotalFreightUser", wbs.sumTotalFreightUser(userName,startDate, endDate));
-        model.addAttribute("sumAmountUser", cms.sumAmountUser(us.currentLoginUser().userId,startDate, endDate));
-        model.addAttribute("sumReFundVNUser", is.sumReFundVNUser(userName,startDate,endDate));
-        model.addAttribute("loginUser", us.currentLoginUser());
-        model.addAttribute("countCartItem", is.countCartItem(userName));
-        model.addAttribute("countPendingOrder",is.countPendingItem(userName));
-        model.addAttribute("countBoughtOrder",os.countBoughtOrder(userName));
-        model.addAttribute("countDeliveredOrder",os.countDeliveredOrder(userName));
-        model.addAttribute("countArriveredOrder",os.countArriveredOrder(userName));
-        model.addAttribute("countFinishedOrder",os.countFinishedOrder(userName));
-        model.addAttribute("countCancelOrder",os.countCancelOrder(userName));
-        model.addAttribute("countComplainOrder",os.countComplainOrder(userName));
-        model.addAttribute("countWholeOrder",os.countWholeOrder(userName));
-        model.addAttribute("countCancelItem",is.countCancelItem(userName));
         return "/user/home";
     }
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/userInfo")
+    public ResponseEntity<Map<String, Object>> getUserInfo(@RequestHeader("Authorization") String token, Model model) throws ParseException {
+        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2023-01-01");
+        Date endDate = java.util.Calendar.getInstance().getTime();
+
+        // Kiểm tra và loại bỏ tiền tố "Token "
+        if (token != null && token.startsWith("Token ")) {
+            token = token.substring(6);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid token"));
+        }
+
+        // Lấy userId từ JWT
+        Integer userId = jwtUtil.getUserIdFromJWT(token);
+        if (userId == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User ID not found"));
+        }
+
+        // Lấy thông tin người dùng bằng UserId
+        Users users = ur.findByUserId(userId);
+        if (users == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User ID not found"));
+        }
+        String userName = users.getUserName();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("sumTotalVNUser", os.sumTotalVNUser(userName, startDate, endDate));
+        response.put("sumTotalCancelVNUser", os.sumTotalCancelVNUser(userName, startDate, endDate));
+        response.put("sumTotalFreightUser", wbs.sumTotalFreightUser(userName, startDate, endDate));
+        response.put("sumAmountUser", cms.sumAmountUser(users.getUserId(), startDate, endDate));
+        response.put("sumReFundVNUser", is.sumReFundVNUser(userName, startDate, endDate));
+        response.put("loginUser", users);
+        response.put("countCartItem", is.countCartItem(userName));
+        response.put("countPendingOrder", is.countPendingItem(userName));
+        response.put("countBoughtOrder", os.countBoughtOrder(userName));
+        response.put("countDeliveredOrder", os.countDeliveredOrder(userName));
+        response.put("countArriveredOrder", os.countArriveredOrder(userName));
+        response.put("countFinishedOrder", os.countFinishedOrder(userName));
+        response.put("countCancelOrder", os.countCancelOrder(userName));
+        response.put("countComplainOrder", os.countComplainOrder(userName));
+        response.put("countWholeOrder", os.countWholeOrder(userName));
+        response.put("countCancelItem", is.countCancelItem(userName));
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @RequestMapping("backend/home")
     public String statisticsAdminPage (Model model) throws ParseException {
         Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2023-01-01");
@@ -253,6 +281,20 @@ public class HomeController {
         return "loginSuccess";
     }
 
-    
+    // DuongDx
+    @GetMapping("/userRedirection")
+    public String userRedirection(@RequestHeader("Authorization") String token) {
+        if (token != null && token.startsWith("Token ")) {
+            token = token.substring(6); // Loại bỏ tiền tố "Bearer "
+        } else {
+            return "Token is missing or invalid";
+        }
+        Integer user = jwtUtil.getUserIdFromJWT(token);
 
+        if (user == null) {
+            return "User not found";
+        }
+
+        return "userRedirection";
+    }
 }

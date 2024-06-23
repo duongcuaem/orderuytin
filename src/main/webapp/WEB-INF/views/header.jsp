@@ -315,8 +315,8 @@
 
         function connect(userItem) {
             var socket = new SockJS('/ws');
+            console.error(socket);
             stompClient = Stomp.over(socket);
-            console.log("1");
             stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame);
                 
@@ -326,13 +326,13 @@
                     displayNotifications(listNotification);
                     showNotificationPopup(JSON.parse(messageOutput.body));
                 });
-                
+
                 // Đăng ký để nhận thông báo từ kênh specific cho người dùng cụ thể (thông báo cá nhân)
-                stompClient.subscribe('/user/' + userItem + '/notifications', function (messageOutput) {
+                stompClient.subscribe('/user/specific/notifications', function (messageOutput) {
+                    console.log(messageOutput);
                     listNotification.push(JSON.parse(messageOutput.body));
                     showNotificationPopup(JSON.parse(messageOutput.body));
                     displayNotifications(listNotification);
-                    console.log("2");
                 });
             });
         };
@@ -379,7 +379,7 @@
                 type: "personal",
                 status: "unread"
             };
-            fetch('http://localhost:8080/sendPersonalNotification?userId=' + selectedUser, {
+            fetch('http://localhost:8080/sendPersonalNotification', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

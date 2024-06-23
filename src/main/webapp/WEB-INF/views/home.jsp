@@ -43,6 +43,10 @@
 <body class="darkmode">
     <!-- header section -->
     <%@include file="header.jsp" %>
+    <div>
+        <%@include file="testthongbao.jsp" %>
+    </div>
+    
     <div style="background-image: url('/orderuytin/banner.jpg');min-height: 100px; background-attachment: fixed; background-position: center; background-repeat: no-repeat; background-size: cover;">
         <div style="padding:10%;text-align:center;font-size:30px;font-weight:bold;background: rgba(0, 0, 0, 0.5);color: #f1f1f1;">
             <h1>CHUYÊN ĐẶT HÀNG TỪ TẤT CẢ CÁC NỀN TẢNG THƯƠNG MẠI ĐIỆN TỬ HÀNG ĐẦU TRUNG QUỐC</h1>

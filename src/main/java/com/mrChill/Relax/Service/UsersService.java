@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mrChill.Relax.entities.Users;
+import com.mrChill.Relax.security.UserPrincipal;
 
 import java.util.List;
 
@@ -31,8 +32,9 @@ public class UsersService {
 
 	public Users currentLoginUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		String principalName = authentication.getName();
-		return ur.findFirstByPhone(principalName);
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        String userName = userPrincipal.getUsername();
+		return ur.findByUserName(userName);
 	}
 
 	public void save(UsersDAO usersDAO) {

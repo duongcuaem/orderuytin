@@ -7,13 +7,14 @@
 </body>
 <script>
     const token = getParameterByName('token');
-    console.log(token)
+    console.log("DuongDx: " + token)
     if (token != null) {
         // Set token vào bộ nhớ của máy
         localStorage.setItem('token', token);
-        //setCookie("token", token, 1);
-        console.log("ok đã chạy vào đây");
-        // nếu đúng sẽ chạy về trang chủ
+        console.log(token)
+        // Gọi vào trang Kiểm tra xem token này thuộc Role nào và chuyển hướng tại BackEnd.
+        //userRedirection(token);
+        // // nếu đúng sẽ chạy về trang chủ
         window.location.href = "home";
     }
 
@@ -40,6 +41,28 @@
     //     var expires = "expires="+ d.toUTCString();
     //     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
     // }
+
+    //Kiểm tra Token Và Gọi Backend chuyển hướng
+    async function userRedirection(token) {
+        try {
+            const url = "http://localhost:8080/userRedirection";
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Token `+token
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            } else {
+                // Assuming the backend returns a URL to redirect to
+                const redirectUrl = await response.text(); // or response.json() if it's JSON
+                window.location.href = redirectUrl;
+            }
+        } catch (error) {
+            console.error('Có lỗi xảy ra:', error);
+        }
+    }
 
 </script>
 </html>

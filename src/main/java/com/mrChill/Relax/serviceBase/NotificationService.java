@@ -91,7 +91,7 @@ public class NotificationService {
      * @param notification Đối tượng thông báo cần gửi
      * @param userId ID của người nhận thông báo
      */
-    public void sendPersonalNotification(Notification notification, Long userId) {
+    public void sendPersonalNotification(Notification notification) {
         saveNotification(notification, "personal");
     }
 }

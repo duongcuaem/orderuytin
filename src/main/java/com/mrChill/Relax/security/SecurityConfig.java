@@ -1,7 +1,6 @@
 package com.mrChill.Relax.security;
 
 import com.mrChill.Relax.Repository.UsersRepository;
-import com.mrChill.Relax.config.handler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +8,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 @EnableWebSecurity
@@ -40,9 +41,6 @@ public class SecurityConfig {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private handler successHandler;
-
-    @Autowired
     UsersRepository ur;
 
     @Bean
@@ -55,30 +53,14 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .authorizeRequests(authorizeRequests -> 
                 authorizeRequests
-                    .mvcMatchers("/", "/ws/**", "/app/**", "/login/**", "/api/loginUser").permitAll()
-                    .antMatchers("/backend/**").hasRole("ADMIN")
-                    .antMatchers("/user/**").hasRole("USER")
-                    .antMatchers(
-                        "/updateRefundItem/**", "/updateCancelItem/**", "/complainItem", "/confirmSuccessOrder/**", 
-                        "/submitComplainOrder/**", "/order", "/item/**", "/cancelItem", "/order/**", "/pendingOrder/**", 
-                        "/boughtOrder/**", "/deleveriedOrder/**", "/arriveredOrder/**", "/complainOrder/**", "/finishedOrder/**", 
-                        "/cancelOrder/**", "/cancelItem/**", "/addItemToCart", "/image/item/**", "/signup", "/rateApi",
-                        "/order/**", "/waybill/**", "/statistics/**", "/userCurrent/**", "/cart/**", "/addCart", 
-                        "/createAccount", "/userNames", "/findOrder/**", "/users", "/createItem", "/finishedOrder", 
-                        "/fixOrder", "/complainOrder", "/pendingOrder", "/baogia", "/notification", "/policies", 
-                        "/policies/complain", "/policies/rules", "/instructions", "/news",
-                        "/asset/gdqc/assets/css/core/bootstrap.min.css", "/css/style.min.cs", "/img/svg/logo.svg",
-                        "/asset/gdqc/assets/js/core/jquery.min.js", "/asset/gdqc/assets/js/core/bootstrap.min.js",
-                        "/asset/frontend/css/index_01.css", "/orderuytin/banner.jpg", "/orderuytin/banner1.jpg",
-                        "/orderuytin/banner2.jpg", "/orderuytin/orderuytin.jpg", "/orderuytin/policies.png",
-                        "/home", "/create", "/", "/loginFailed"
-                    ).permitAll()
-                    .anyRequest().authenticated()
+                    .mvcMatchers("/", "/ws/**", "/user/**", "/app/**", "/login/**", "/api/**").permitAll()
+                    //.antMatchers("/backend/**").hasRole("ADMIN")
+                    //.antMatchers("/user/**").hasRole("USER")
+                    //.anyRequest().authenticated()
             )
             .oauth2Login(oauth2Login -> 
                 oauth2Login
-                    .loginPage("/login")
-                    .defaultSuccessUrl("/home")
+                    .loginPage("/doLogin")
                     .userInfoEndpoint(userInfoEndpoint -> 
                         userInfoEndpoint.oidcUserService(oidcUserService()))
                     .successHandler(authenticationSuccessHandler())
@@ -87,8 +69,7 @@ public class SecurityConfig {
             .formLogin(formLogin -> 
                 formLogin
                     .loginPage("/doLogin")
-                    .defaultSuccessUrl("/home")
-                    .successHandler(successHandler)
+                    .successHandler(formAuthenticationSuccessHandler())                    
                     .permitAll()
             )
             .logout(logout -> 
@@ -119,9 +100,30 @@ public class SecurityConfig {
                 // Tạo UserPrincipal và JWT từ attributes
                 UserPrincipal userPrincipal = new UserPrincipal((String) attributes.get("email"), attributes);
                 String jwt = jwtUtil.generateToken(userPrincipal);
-
-                // Redirect về trang chủ với JWT trong URL
                 response.sendRedirect("/loginSuccess?token=" + jwt);
+            }
+        };
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler formAuthenticationSuccessHandler() {
+        return new AuthenticationSuccessHandler() {
+            @Override
+            public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+                // Kiểm tra quyền của người dùng và chuyển hướng tương ứng
+                Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+                String redirectUrl = "/home"; // Default redirect URL
+
+                for (GrantedAuthority authority : authorities) {
+                    if (authority.getAuthority().equals("ROLE_ADMIN")) {
+                        redirectUrl = "backend/home";
+                        break;
+                    } else if (authority.getAuthority().equals("ROLE_USER")) {
+                        redirectUrl = "user/home";
+                    }
+                }
+
+                response.sendRedirect(redirectUrl);
             }
         };
     }
@@ -156,7 +158,7 @@ public class SecurityConfig {
             public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
                 // Xóa JWT hoặc các thông tin xác thực khác nếu cần
                 String token = request.getHeader("Authorization");
-                if (token != null && token.startsWith("Bearer ")) {
+                if (token != null && token.startsWith("Token ")) {
                     token = token.substring(7);
                     // Xóa token hoặc làm gì đó với token
                 }

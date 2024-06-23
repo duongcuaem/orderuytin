@@ -4,48 +4,70 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import com.mrChill.Relax.entity.User;
-import com.mrChill.Relax.repoBase.UserRepository;
+import com.mrChill.Relax.Repository.UsersRepository;
+import com.mrChill.Relax.entities.Users;
 import com.mrChill.Relax.security.UserPrincipal;
-import com.mrChill.Relax.serviceBase.UserBaseService;
+import com.mrChill.Relax.serviceBase.UserService;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Service
-public class UserServiceImpl implements UserBaseService {
+public class UserServiceImpl implements UserService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UsersRepository userRepository;
 
     @Override
-    public User createUser(User user) {
+    public Users createUser(Users user) {
         return userRepository.saveAndFlush(user);
     }
 
     @Override
-    public UserPrincipal findByUsername(String username) {
-        User user = userRepository.findByUsername(username);
+    public UserPrincipal findByUserName(String username) {
+        Users user = userRepository.findByUserName(username);
         UserPrincipal userPrincipal = null;
 
         if (null != user) {
             Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-            if (null != user.getRoles()) {
-                user.getRoles().forEach(r -> {
-                    authorities.add(new SimpleGrantedAuthority(r.getRoleKey()));
-                    r.getPermissions().forEach(p -> authorities.add(new SimpleGrantedAuthority(p.getPermissionKey())));
-                });
+            if (null != user.getRole()) {
+                authorities.add(new SimpleGrantedAuthority(user.getRole()));
             }
 
-            userPrincipal = new UserPrincipal(user.getId(), user.getUsername(), user.getPassword(), authorities);
+            userPrincipal = new UserPrincipal((long) user.getUserId(), user.getUserName(), user.getPassword(), authorities);
         }
         return userPrincipal;
     }
 
-    // Check UserName is existed
     @Override
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
+    public UserPrincipal findByPhone(String userPhone) {
+        Users user = userRepository.findFirstByPhone(userPhone);
+        UserPrincipal userPrincipal = null;
+
+        if (null != user) {
+            Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+            if (null != user.getRole()) {
+                authorities.add(new SimpleGrantedAuthority(user.getRole()));
+            }
+
+            userPrincipal = new UserPrincipal((long) user.getUserId(), user.getUserName(), user.getPassword(), authorities);
+        }
+        return userPrincipal;
     }
 
+    @Override
+    public UserPrincipal findByEmail(String userEmail) {
+        Users user = userRepository.findByEmail(userEmail);
+        UserPrincipal userPrincipal = null;
+
+        if (null != user) {
+            Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+            if (null != user.getRole()) {
+                authorities.add(new SimpleGrantedAuthority(user.getRole()));
+            }
+
+            userPrincipal = new UserPrincipal((long) user.getUserId(), user.getUserName(), user.getPassword(), authorities);
+        }
+        return userPrincipal;
+    }
 }

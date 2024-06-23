@@ -7,18 +7,20 @@ import org.springframework.stereotype.Repository;
 
 import com.mrChill.Relax.entities.Users;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface UsersRepository extends JpaRepository <Users,Integer> {
 
 	Users findFirstByPhone(String phone);
-
+	Users findByUserName(String username);
+	Users findByPhone(String phone);
 	Users findByUserId(Integer id);
+	Users findByEmail (String email);
+
 	boolean existsByEmail (String email);
 	boolean existsByPhone (String phone);
+	boolean existsByUserName (String username);
 	List<Users> findByRoleNotContainsIgnoreCase(String character);
 	Users findByUserNameIsContainingIgnoreCase(String character);
 

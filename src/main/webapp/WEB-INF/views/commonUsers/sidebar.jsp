@@ -1,14 +1,14 @@
-<%@page pageEncoding="UTF-8" %>
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <aside class="sidebar">
     <div class="sidebar-start">
         <div class="sidebar-head">
             <a href="/" class="logo-wrapper" title="Home">
-                <span class="logo-title" style="color:white"> ${loginUser.userName}</span>
-                <span class="logo-title" style="color:white">Tỉ giá : ${loginUser.rate} đ/¥</span>
-                <span class="logo-title" style="color:white">Tỉ giá kg : ${loginUser.rateKg}</span>
-                <span class="logo-title" style="color:white">Tỉ giá m3 : ${loginUser.rateM3}</span>
+                <span class="logo-title" style="color:white" id="userName"></span>
+                <span class="logo-title" style="color:white" id="rate"></span>
+                <span class="logo-title" style="color:white" id="rateKg"></span>
+                <span class="logo-title" style="color:white" id="rateM3"></span>
             </a>
             <button class="sidebar-toggle transparent-btn" title="Menu" type="button">
                 <span class="sr-only">Toggle menu</span>
@@ -18,8 +18,8 @@
         <div class="sidebar-body">
             <ul class="sidebar-body-menu">
                 <li>
-                    <a class="show-cat-btn active" >
-                         Quản lý
+                    <a class="show-cat-btn active">
+                        Quản lý
                         <span class="category__btn transparent-btn" title="Open list">
                           <span class="sr-only">Open list</span>
                           <span class="icon arrow-down" aria-hidden="true"></span>
@@ -32,9 +32,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/user/statistics/chargDetail">Nạp tiền
-
-                            </a>
+                            <a href="/user/statistics/chargDetail">Nạp tiền</a>
                         </li>
                         <li>
                             <a class="a-decorate" href="/baogia">
@@ -50,6 +48,5 @@
                 </li>
             </ul>
         </div>
-
     </div>
 </aside>

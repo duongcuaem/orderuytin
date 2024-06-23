@@ -27,15 +27,19 @@ public abstract class BaseEntity implements Serializable {
     private boolean deleted = false;
 
     @CreatedDate
+	@Column(name = "created_at")
     private Date createdAt;
 
     @LastModifiedDate
+	@Column(name = "updated_at")
     private Date updatedAt;
 
     @CreatedBy
+	@Column(name = "created_by")
     private Long createdBy;
 
     @LastModifiedBy
+	@Column(name = "updated_by")
     private Long updatedBy;
 
 	/**
