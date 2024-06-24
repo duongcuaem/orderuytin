@@ -283,18 +283,28 @@ public class HomeController {
 
     // DuongDx
     @GetMapping("/userRedirection")
-    public String userRedirection(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<String> userRedirection(@RequestHeader("Authorization") String token) {
         if (token != null && token.startsWith("Token ")) {
-            token = token.substring(6); // Loại bỏ tiền tố "Bearer "
+            token = token.substring(6); // Loại bỏ tiền tố "Token "
         } else {
-            return "Token is missing or invalid";
-        }
-        Integer user = jwtUtil.getUserIdFromJWT(token);
-
-        if (user == null) {
-            return "User not found";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token is missing or invalid");
         }
 
-        return "userRedirection";
+        Integer userId = jwtUtil.getUserIdFromJWT(token);
+
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token is missing or invalid");
+        }
+
+        Users users = ur.findByUserId(userId);
+        if (users == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token is missing or invalid");
+        }
+
+        if ("ROLE_ADMIN".equals(users.getRole())) {
+            return ResponseEntity.ok("/backend/home");
+        } else {
+            return ResponseEntity.ok("/user/home");
+        }
     }
 }

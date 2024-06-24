@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mrChill.Relax.Repository.UsersRepository;
 import com.mrChill.Relax.entities.Users;
 import com.mrChill.Relax.entity.Token;
 
@@ -45,6 +46,9 @@ public class ManagerController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UsersRepository usersRepository;
 
     @PostMapping("/loginUser")
     public ResponseEntity<?> login(@RequestBody @Valid Users user, HttpServletRequest request) {
@@ -102,6 +106,19 @@ public class ManagerController {
     //     user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
     //     return userService.createUser(user);
     // }
+
+    @GetMapping("/me")
+    public Users me(@RequestHeader("Authorization") String token) {
+        // Kiểm tra và loại bỏ tiền tố "Token "
+        if (token != null && token.startsWith("Token ")) {
+            token = token.substring(6);
+        } 
+
+        Integer userId = jwtUtil.getUserIdFromJWT(token);
+
+        return usersRepository.findByUserId(userId);
+
+    }
 
     @PostMapping("/logout")
     public void logout(HttpServletRequest request, HttpServletResponse response) {

@@ -13,9 +13,9 @@
         localStorage.setItem('token', token);
         console.log(token)
         // Gọi vào trang Kiểm tra xem token này thuộc Role nào và chuyển hướng tại BackEnd.
-        //userRedirection(token);
+        userRedirection(token);
         // // nếu đúng sẽ chạy về trang chủ
-        window.location.href = "home";
+        //window.location.href = "home";
     }
 
     // Hàm để lấy giá trị của một tham số từ URL
@@ -35,28 +35,21 @@
         return Date.now() > expirationTime;
     }
 
-    // function setCookie(cname, cvalue, exdays) {
-    //     var d = new Date();
-    //     d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    //     var expires = "expires="+ d.toUTCString();
-    //     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-    // }
-
-    //Kiểm tra Token Và Gọi Backend chuyển hướng
     async function userRedirection(token) {
+        console.log(token);
         try {
             const url = "http://localhost:8080/userRedirection";
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Token `+token
+                    'Authorization': `Token ` + token
                 }
             });
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             } else {
-                // Assuming the backend returns a URL to redirect to
-                const redirectUrl = await response.text(); // or response.json() if it's JSON
+                const redirectUrl = await response.text();
+                console.log(redirectUrl);
                 window.location.href = redirectUrl;
             }
         } catch (error) {

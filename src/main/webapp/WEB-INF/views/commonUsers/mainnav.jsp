@@ -2,6 +2,8 @@
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="s" uri="http://www.springframework.org/security/tags" %>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <nav class="main-nav--bg" style="background-color: black">
     <div class="container main-nav">
         <div class="main-nav-start">
@@ -30,15 +32,31 @@
                     <i class="fa-solid fa-cart-shopping" style="font-size:35px"></i>
                 </a>
             </div>
+            <div style="color:white;">
+                <a href="/user/item/cart">
+                    <p style="color:red;font-size:15px;float:right" id="countCartItem"></p>
+                    <i class="fa-solid fa-cart-shopping" style="font-size:35px"></i>
+                </a>
+            </div>
+            <div style="color:white;font-size:35px;position:relative;">
+                <p style="color:red;font-size:15px;float:right" id="notificationCount">0</p>
+                <i class="fa-solid fa-bell"></i>
+            </div>
 
             <div>
                 <!-- Add a logout button -->
-                <form:form action="/logout" method="POST">
-                    <button type="submit" style="color:white;background-color:black;font-size:35px"><i class="fa-solid fa-right-from-bracket"></i></button>
-                </form:form>
+                    <button onclick="logout()" style="color:white;background-color:black;font-size:35px"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </div>
+    <!-- Notification Popup -->
+    <div id="notification-new" class="notification-popup"></div>
+    <!-- Special Notification Popup -->
+    <div id="specialNotificationPopup" class="special-notification-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:white;color:black;border:1px solid #ccc;padding:20px;z-index:1000;">
+        <p id="specialNotificationText"></p>
+        <button onclick="closeSpecialNotification()">Close</button>
+    </div>
+
     <div style="display:flex;flex-direction:row;justify-content:space-between;margin:5px;text-align:center;color:white">
         <div>
             <p style="font-size:15px;float:right" id="countWholeOrder"></p>
@@ -95,3 +113,122 @@
         </div>
     </div>
 </nav>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/doLogin';
+        } else {
+            fetch('http://localhost:8080/api/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Token ` + token
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            }).then(data => {
+                console.log(data);
+                var userItem = 0;
+                // Lưu Id vào storage
+                if (data.socialcode != null) {
+                    localStorage.setItem('userId', data.socialcode);
+                    userItem = data.socialcode;
+                } else {
+                    if (data.userId != null) {
+                        localStorage.setItem('userId', data.userId);
+                        userItem = data.userId;
+                    }
+                }
+                // Lấy thông báo từ DB
+                getNotifications(userItem, 0, 5);
+                // Kết nối tới WebSocket
+                connect(userItem);
+            }).catch(error => {
+                console.error('Có lỗi xảy ra:', error);
+                window.location.href = '/doLogin';
+            });
+        }
+    });
+
+    // WebSocket Client Setup
+    var stompClient = null;
+
+    function connect(userItem) {
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            
+            // Đăng ký để nhận thông báo từ kênh topic (thông báo chung)
+            stompClient.subscribe('/all/notifications', function (messageOutput) {
+                showNotification(JSON.parse(messageOutput.body));
+            });
+
+            // Đăng ký để nhận thông báo từ kênh specific cho người dùng cụ thể (thông báo cá nhân)
+            stompClient.subscribe('/user/specific/notifications/' + userItem, function (messageOutput) {
+                showNotification(JSON.parse(messageOutput.body));
+            });
+        });
+    };
+
+    var listNotification = [];
+    //Lấy thông báo người dùng
+    async function getNotifications(recipient, page, size) {
+        console.log("recipient: " + recipient + " page: " + page + " size: " + size);
+        try {
+            const url = "http://localhost:8080/notifications?recipient=" + recipient + "&page=" + page + "&size=" + size;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const notificationsPage = await response.json();
+            console.log(notificationsPage);
+            listNotification = notificationsPage.content;
+            displayNotifications(listNotification);
+        } catch (error) {
+            console.error('Có lỗi xảy ra:', error);
+        }
+    }
+
+    function displayNotifications(notifications) {
+        const notificationList = document.getElementById('notificationList');
+        notificationList.innerHTML = '';
+        notifications.forEach(notification => {
+            const notificationItem = document.createElement('li');
+            notificationItem.innerText = notification.message;
+            notificationList.appendChild(notificationItem);
+        });
+        document.getElementById('notificationCount').innerText = notifications.length;
+    }
+
+    function showNotification(notification) {
+        if (notification.isSpecial) {
+            document.getElementById('specialNotificationText').innerText = notification.message;
+            document.getElementById('specialNotificationPopup').style.display = 'block';
+        } else {
+            const notificationList = document.getElementById('notificationList');
+            const notificationItem = document.createElement('li');
+            notificationItem.innerText = notification.message;
+            notificationList.appendChild(notificationItem);
+
+            let count = parseInt(document.getElementById('notificationCount').innerText);
+            document.getElementById('notificationCount').innerText = count + 1;
+        }
+    }
+
+    document.getElementById('notificationIcon').addEventListener('mouseover', function() {
+        document.getElementById('notificationPopup').style.display = 'block';
+    });
+
+    document.getElementById('notificationIcon').addEventListener('mouseout', function() {
+        document.getElementById('notificationPopup').style.display = 'none';
+    });
+
+    function closeSpecialNotification() {
+        document.getElementById('specialNotificationPopup').style.display = 'none';
+    }
+</script>
+

@@ -1,6 +1,8 @@
 package com.mrChill.Relax.security;
 
 import com.mrChill.Relax.Repository.UsersRepository;
+import com.mrChill.Relax.entities.Users;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,9 +56,9 @@ public class SecurityConfig {
             .authorizeRequests(authorizeRequests -> 
                 authorizeRequests
                     .mvcMatchers("/", "/ws/**", "/user/**", "/app/**", "/login/**", "/api/**").permitAll()
-                    //.antMatchers("/backend/**").hasRole("ADMIN")
-                    //.antMatchers("/user/**").hasRole("USER")
-                    //.anyRequest().authenticated()
+                    .antMatchers("/backend/**").hasRole("ADMIN")
+                    .antMatchers("/user/**").hasRole("USER")
+                    .anyRequest().authenticated()
             )
             .oauth2Login(oauth2Login -> 
                 oauth2Login
@@ -96,14 +98,44 @@ public class SecurityConfig {
                 OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
                 OAuth2User oauth2User = oauth2Token.getPrincipal();
                 Map<String, Object> attributes = oauth2User.getAttributes();
-
+                String registrationId = oauth2Token.getAuthorizedClientRegistrationId();
+                
                 // Tạo UserPrincipal và JWT từ attributes
                 UserPrincipal userPrincipal = new UserPrincipal((String) attributes.get("email"), attributes);
+                // Kiểm tra xem tài khoản có tồn tại không 
+                String email = userPrincipal.getEmail();
+                Users user = ur.findByEmail(email);
+                
+                if (user == null) {
+                    // chưa tồn tại người dùng thì sẽ tạo mới tài khoản
+                    user = new Users();
+                    // Kiểm tra xem là google hay mạng xã hội nào
+                    if ("google".equalsIgnoreCase(registrationId)) {
+                        String sub = (String) attributes.get("sub");
+                        user.setSocialcode(sub);
+                    }
+                    if ("facebook".equalsIgnoreCase(registrationId)) {
+                        String id = (String) attributes.get("id");
+                        user.setSocialcode(id);
+                    }
+                    // Lấy giá trị của sub từ attributes
+                    user.setUserName(userPrincipal.getFullName().trim());
+                    user.setEmail(userPrincipal.getEmail().trim());
+                    user = ur.save(user);
+                    if (user != null) {
+                        userPrincipal.setUserId(user.getUserId().longValue());
+                    }
+                } else {
+                    userPrincipal.setUserId(user.getUserId().longValue());
+                }
+                // nếu tồn tại rồi thì lấy dữ liệu ra 
+                
                 String jwt = jwtUtil.generateToken(userPrincipal);
                 response.sendRedirect("/loginSuccess?token=" + jwt);
             }
         };
     }
+
 
     @Bean
     public AuthenticationSuccessHandler formAuthenticationSuccessHandler() {

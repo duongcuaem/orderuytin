@@ -34,9 +34,10 @@
     $(document).ready(function() {
         // Lấy token từ localStorage
         var token = localStorage.getItem('token');
+        console.log(token);
         if (!token) {
             $('#userInfo').text('Không tìm thấy token, vui lòng đăng nhập lại.');
-            window.location.href = '/DoLogin';
+            //window.location.href = '/DoLogin';
         }
 
         $.ajax({

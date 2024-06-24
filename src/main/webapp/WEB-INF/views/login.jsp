@@ -111,7 +111,6 @@
                         localStorage.setItem('token', response.token);
                         // Thực hiện điều gì đó khi đăng nhập thành công, ví dụ: chuyển hướng trang
                         window.location.href = response.url;
-                        //getInfoLogin(response.token, response.url);
                     } else {
                         $('#message').removeClass('success').addClass('error').text(response.message);
                     }
@@ -121,30 +120,6 @@
                 }
             });
         });
-
-        function getInfoLogin(token, url) {
-            if (!token) {
-                $('#message').removeClass('success').addClass('error').text('Không tìm thấy token, vui lòng đăng nhập lại.');
-                return;
-            }
-
-            $.ajax({
-                type: 'GET',
-                url: url, // Endpoint để lấy thông tin người dùng
-                headers: {
-                    'Authorization': 'Token ' + token
-                },
-                success: function(response) {
-                    $('#message').removeClass('error').addClass('success').text('Lấy thông tin người dùng thành công!');
-                    // Thực hiện các hành động khác với thông tin người dùng
-                    console.log(response);
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#message').removeClass('success').addClass('error').text('Không thể lấy thông tin người dùng, vui lòng thử lại sau.');
-                }
-            });
-        }
-
     });
 </script>
 </body>
