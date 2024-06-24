@@ -7,7 +7,10 @@ import com.mrChill.Relax.config.language.MessageConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,7 @@ import com.mrChill.Relax.entities.Users;
 import com.mrChill.Relax.security.UserPrincipal;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -32,8 +36,36 @@ public class UsersService {
 
 	public Users currentLoginUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        String userName = userPrincipal.getUsername();
+
+		if (authentication == null) {
+			return null;
+		}
+
+		String userName = null;
+
+		if (authentication.getPrincipal() instanceof UserPrincipal) {
+			UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+			userName = userPrincipal.getUsername();
+		} else if (authentication.getPrincipal() instanceof OAuth2User) {
+			OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
+			OAuth2User oauth2User = oauth2Token.getPrincipal();
+			String registrationId = oauth2Token.getAuthorizedClientRegistrationId();
+			Map<String, Object> attributes = oauth2User.getAttributes();
+
+			if ("google".equalsIgnoreCase(registrationId)) {
+				String sub = (String) attributes.get("sub");
+				return ur.findBySocialcode(sub);
+			}
+			if ("facebook".equalsIgnoreCase(registrationId)) {
+				String id = (String) attributes.get("id");
+				return ur.findBySocialcode(id);
+			}
+		} else if (authentication.getPrincipal() instanceof UserDetails) {
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			userName = userDetails.getUsername();
+		} else {
+			userName = authentication.getName();
+		}
 		return ur.findByUserName(userName);
 	}
 

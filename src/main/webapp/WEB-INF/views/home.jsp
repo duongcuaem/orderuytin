@@ -282,10 +282,10 @@
         }
     </style>
 
-    <script type="text/javascript">
+    <!-- <script type="text/javascript">
         $('.parallax-img').parallax({
             speed: 0.2
         });
-    </script>
+    </script> -->
 </body>
 </html>

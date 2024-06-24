@@ -4,6 +4,35 @@
 <%@ taglib prefix="s" uri="http://www.springframework.org/security/tags" %>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<style>
+    .notification-popup li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    }
+
+    .notification-popup li:last-child {
+        border-bottom: none;
+    }
+
+    .notification-popup .notification-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .notification-popup .notification-item .notification-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .notification-popup .notification-item .notification-body {
+        margin-top: 5px;
+        font-size: 16px;
+        color: #333;
+    }
+
+</style>
 <nav class="main-nav--bg" style="background-color: black">
     <div class="container main-nav">
         <div class="main-nav-start">
@@ -11,7 +40,7 @@
                 <div class="search-wrapper" style="display:flex;flex-direction:row">
                     <i data-feather="search" aria-hidden="true"></i>
                     <input type="text" name="search" placeholder="Hãy tìm kiếm đơn hàng qua miêu tả sản phẩm !!! ..." required>
-                    <button type="submit" style="border-radius:5px;padding:2px;color:white;background-color:black;boder-radius:10px;border-style:solid;border-width: thin;border-color:white"> Tìm kiếm </button>
+                    <button type="submit" style="border-radius:5px;padding:2px;color:white;background-color:black;border-radius:10px;border-style:solid;border-width: thin;border-color:white"> Tìm kiếm </button>
                 </div>
             </form>
         </div>
@@ -40,9 +69,13 @@
             </div>
             <div style="color:white;font-size:35px;position:relative;">
                 <p style="color:red;font-size:15px;float:right" id="notificationCount">0</p>
-                <i class="fa-solid fa-bell"></i>
+                <i id="notificationIcon" class="fa-solid fa-bell"></i>
+                <ul id="notificationList" class="notification-popup" style="display:none;position:absolute;top:40px;right:0;background-color:white;color:black;border:1px solid #ccc;padding:10px;list-style:none;z-index:1000;width:300px;">
+                    <li id="noNotification" style="display:none;">Không có thông báo</li>
+                </ul>
             </div>
-
+            
+            
             <div>
                 <!-- Add a logout button -->
                     <button onclick="logout()" style="color:white;background-color:black;font-size:35px"><i class="fa-solid fa-right-from-bracket"></i></button>
@@ -138,8 +171,8 @@
                     userItem = data.socialcode;
                 } else {
                     if (data.userId != null) {
-                        localStorage.setItem('userId', data.userId);
-                        userItem = data.userId;
+                        localStorage.setItem('userId', data.userName);
+                        userItem = data.userName;
                     }
                 }
                 // Lấy thông báo từ DB
@@ -151,6 +184,16 @@
                 window.location.href = '/doLogin';
             });
         }
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationList = document.getElementById('notificationList');
+
+        notificationIcon.addEventListener('mouseover', function() {
+            notificationList.style.display = 'block';
+        });
+
+        notificationIcon.addEventListener('mouseout', function() {
+            notificationList.style.display = 'none';
+        });
     });
 
     // WebSocket Client Setup
@@ -168,7 +211,7 @@
             });
 
             // Đăng ký để nhận thông báo từ kênh specific cho người dùng cụ thể (thông báo cá nhân)
-            stompClient.subscribe('/user/specific/notifications/' + userItem, function (messageOutput) {
+            stompClient.subscribe('/user/specific/notifications' , function (messageOutput) {
                 showNotification(JSON.parse(messageOutput.body));
             });
         });
@@ -195,28 +238,68 @@
 
     function displayNotifications(notifications) {
         const notificationList = document.getElementById('notificationList');
+        const noNotification = document.getElementById('noNotification');
+
         notificationList.innerHTML = '';
-        notifications.forEach(notification => {
-            const notificationItem = document.createElement('li');
-            notificationItem.innerText = notification.message;
-            notificationList.appendChild(notificationItem);
-        });
+        if (notifications.length === 0) {
+            noNotification.style.display = 'block';
+        } else {
+            noNotification.style.display = 'none';
+            notifications.forEach(notification => {
+                const notificationItem = document.createElement('li');
+                notificationItem.classList.add('notification-item');
+                
+                const notificationHeader = document.createElement('div');
+                notificationHeader.classList.add('notification-header');
+                const sender = document.createElement('span');
+                sender.innerText = notification.sender; // Assuming the notification object has a sender field
+                const time = document.createElement('span');
+                time.innerText = new Date(notification.createdAt).toLocaleString(); // Assuming the notification object has a timestamp field
+                notificationHeader.appendChild(sender);
+                notificationHeader.appendChild(time);
+                
+                const notificationBody = document.createElement('div');
+                notificationBody.classList.add('notification-body');
+                notificationBody.innerText = notification.message;
+                
+                notificationItem.appendChild(notificationHeader);
+                notificationItem.appendChild(notificationBody);
+                notificationList.appendChild(notificationItem);
+            });
+        }
         document.getElementById('notificationCount').innerText = notifications.length;
     }
 
     function showNotification(notification) {
-        if (notification.isSpecial) {
-            document.getElementById('specialNotificationText').innerText = notification.message;
-            document.getElementById('specialNotificationPopup').style.display = 'block';
-        } else {
-            const notificationList = document.getElementById('notificationList');
-            const notificationItem = document.createElement('li');
-            notificationItem.innerText = notification.message;
-            notificationList.appendChild(notificationItem);
-
-            let count = parseInt(document.getElementById('notificationCount').innerText);
-            document.getElementById('notificationCount').innerText = count + 1;
+        const notificationList = document.getElementById('notificationList');
+        const noNotification = document.getElementById('noNotification');
+        
+        if (noNotification) {
+            noNotification.style.display = 'none';
         }
+
+        const notificationItem = document.createElement('li');
+        notificationItem.classList.add('notification-item');
+
+        const notificationHeader = document.createElement('div');
+        notificationHeader.classList.add('notification-header');
+        const sender = document.createElement('span');
+        sender.innerText = notification.fromName; // Assuming the notification object has a sender field
+        const time = document.createElement('span');
+        time.innerText = new Date(notification.createdAt).toLocaleString(); // Assuming the notification object has a timestamp field
+        notificationHeader.appendChild(sender);
+        notificationHeader.appendChild(time);
+
+        const notificationBody = document.createElement('div');
+        notificationBody.classList.add('notification-body');
+        notificationBody.innerText = notification.message;
+
+        notificationItem.appendChild(notificationHeader);
+        notificationItem.appendChild(notificationBody);
+        notificationList.appendChild(notificationItem);
+
+        let count = parseInt(document.getElementById('notificationCount').innerText);
+        document.getElementById('notificationCount').innerText = count + 1;
     }
 
     document.getElementById('notificationIcon').addEventListener('mouseover', function() {
@@ -229,6 +312,34 @@
 
     function closeSpecialNotification() {
         document.getElementById('specialNotificationPopup').style.display = 'none';
+    }
+
+     // Logout function
+     function logout() {
+        callLogout();
+    }
+
+    function callLogout() {
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetch('http://localhost:8080/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    localStorage.removeItem('token');
+                    window.location.href = "/doLogin";
+                } else {
+                    console.error('Logout failed');
+                }
+            });
+        } else {
+            localStorage.removeItem('token');
+            window.location.href = "/doLogin";
+        }
     }
 </script>
 

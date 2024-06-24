@@ -444,10 +444,10 @@
         }
 
         // jQuery event handlers
-        $(function () {
-            $("#sendToAll").click(() => sendNotificationToAll());
-            $("#sendToUser").click(() => sendNotificationToUser());
-        });
+        // $(function () {
+        //     $("#sendToAll").click(() => sendNotificationToAll());
+        //     $("#sendToUser").click(() => sendNotificationToUser());
+        // });
     </script>
 </body>
 </html>

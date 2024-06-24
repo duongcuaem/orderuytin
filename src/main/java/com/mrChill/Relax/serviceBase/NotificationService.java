@@ -49,7 +49,11 @@ public class NotificationService {
         notification.setType(type); // Thiết lập loại thông báo là cá nhân
         notification.setStatus("unread"); // Thiết lập trạng thái thông báo là chưa đọc
         notification.setCreatedAt(new Date());
-        notification.setFromName(currentUser);
+        if("".equals(currentUser)){
+            notification.setFromName("Admin: ");
+        }else{
+            notification.setFromName(currentUser);
+        }
         notification.setCreatedBy(currentUserId);
         notificationRepository.save(notification);
     }

@@ -55,10 +55,10 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .authorizeRequests(authorizeRequests -> 
                 authorizeRequests
-                    .mvcMatchers("/", "/ws/**", "/user/**", "/app/**", "/login/**", "/api/**").permitAll()
-                    .antMatchers("/backend/**").hasRole("ADMIN")
-                    .antMatchers("/user/**").hasRole("USER")
-                    .anyRequest().authenticated()
+                    .mvcMatchers("/", "/ws/**", "/user/**", "/app/**", "/login/**", "/home/**","/api/**").permitAll()
+                    // .antMatchers("/backend/**").hasRole("ADMIN")
+                    // .antMatchers("/user/**").hasRole("USER")
+                    // .anyRequest().authenticated()
             )
             .oauth2Login(oauth2Login -> 
                 oauth2Login

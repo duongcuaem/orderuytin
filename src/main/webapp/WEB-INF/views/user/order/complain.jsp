@@ -9,6 +9,8 @@
 <head>
 	<jsp:include page="/WEB-INF/views/commonUsers/head.jsp"></jsp:include>
 	<link rel="shortcut icon" type="image/x-icon" href="/orderuytin/orderuytin.jpg">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
 <body style="background-color: black">
 <!-- ! Body -->
@@ -44,7 +46,13 @@
 							<p style="color:red;font-size:15px;float:right">${countCartItem}</p> <i style="font-size:35px" class="fa-solid fa-cart-shopping"></i>
 						</a>
 					</div>
-
+					<div style="color:white;font-size:35px;position:relative;">
+						<p style="color:red;font-size:15px;float:right" id="notificationCount">0</p>
+						<i id="notificationIcon" class="fa-solid fa-bell"></i>
+						<ul id="notificationList" class="notification-popup" style="display:none;position:absolute;top:40px;right:0;background-color:white;color:black;border:1px solid #ccc;padding:100px;list-style:none;z-index:1000;">
+							<!-- Notification items will be appended here -->
+						</ul>
+					</div>
 					<div >
 						<!-- Add a logout button -->
 						<form:form action="/logout"   method="POST">
@@ -52,6 +60,13 @@
 						</form:form>
 					</div>
 				</div>
+			</div>
+			<!-- Notification Popup -->
+			<div id="notification-new" class="notification-popup"></div>
+			<!-- Special Notification Popup -->
+			<div id="specialNotificationPopup" class="special-notification-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:white;color:black;border:1px solid #ccc;padding:20px;z-index:1000;">
+				<p id="specialNotificationText"></p>
+				<button onclick="closeSpecialNotification()">Close</button>
 			</div>
 			<div style="display:flex;flex-direction:row;justify-content:space-between;margin:5px;text-align:center;color:white">
 				<div>
@@ -217,5 +232,160 @@
 	<script src="/js/script.js"></script>
 
 </body>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/doLogin';
+        } else {
+            fetch('http://localhost:8080/api/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Token ` + token
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            }).then(data => {
+                console.log(data);
+                var userItem = 0;
+                // Lưu Id vào storage
+                if (data.socialcode != null) {
+                    localStorage.setItem('userId', data.socialcode);
+                    userItem = data.socialcode;
+                } else {
+                    if (data.userId != null) {
+                        localStorage.setItem('userId', data.userId);
+                        userItem = data.userId;
+                    }
+                }
+                // Lấy thông báo từ DB
+                getNotifications(userItem, 0, 5);
+                // Kết nối tới WebSocket
+                connect(userItem);
+            }).catch(error => {
+                console.error('Có lỗi xảy ra:', error);
+                window.location.href = '/doLogin';
+            });
+        }
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationList = document.getElementById('notificationList');
 
+        notificationIcon.addEventListener('mouseover', function() {
+            notificationList.style.display = 'block';
+        });
+
+        notificationIcon.addEventListener('mouseout', function() {
+            notificationList.style.display = 'none';
+        });
+    });
+
+    // WebSocket Client Setup
+    var stompClient = null;
+
+    function connect(userItem) {
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            
+            // Đăng ký để nhận thông báo từ kênh topic (thông báo chung)
+            stompClient.subscribe('/all/notifications', function (messageOutput) {
+                showNotification(JSON.parse(messageOutput.body));
+            });
+
+            // Đăng ký để nhận thông báo từ kênh specific cho người dùng cụ thể (thông báo cá nhân)
+            stompClient.subscribe('/user/specific/notifications/' + userItem, function (messageOutput) {
+                showNotification(JSON.parse(messageOutput.body));
+            });
+        });
+    };
+
+    var listNotification = [];
+    //Lấy thông báo người dùng
+    async function getNotifications(recipient, page, size) {
+        console.log("recipient: " + recipient + " page: " + page + " size: " + size);
+        try {
+            const url = "http://localhost:8080/notifications?recipient=" + recipient + "&page=" + page + "&size=" + size;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const notificationsPage = await response.json();
+            console.log(notificationsPage);
+            listNotification = notificationsPage.content;
+            displayNotifications(listNotification);
+        } catch (error) {
+            console.error('Có lỗi xảy ra:', error);
+        }
+    }
+
+    function displayNotifications(notifications) {
+        const notificationList = document.getElementById('notificationList');
+        notificationList.innerHTML = '';
+        notifications.forEach(notification => {
+            const notificationItem = document.createElement('li');
+            notificationItem.innerText = notification.message;
+            notificationList.appendChild(notificationItem);
+        });
+        document.getElementById('notificationCount').innerText = notifications.length;
+    }
+
+    function showNotification(notification) {
+        if (notification.isSpecial) {
+            document.getElementById('specialNotificationText').innerText = notification.message;
+            document.getElementById('specialNotificationPopup').style.display = 'block';
+        } else {
+            const notificationList = document.getElementById('notificationList');
+            const notificationItem = document.createElement('li');
+            notificationItem.innerText = notification.message;
+            notificationList.appendChild(notificationItem);
+
+            let count = parseInt(document.getElementById('notificationCount').innerText);
+            document.getElementById('notificationCount').innerText = count + 1;
+        }
+    }
+
+    // document.getElementById('notificationIcon').addEventListener('mouseover', function() {
+    //     document.getElementById('notificationPopup').style.display = 'block';
+    // });
+
+    // document.getElementById('notificationIcon').addEventListener('mouseout', function() {
+    //     document.getElementById('notificationPopup').style.display = 'none';
+    // });
+
+    function closeSpecialNotification() {
+        document.getElementById('specialNotificationPopup').style.display = 'none';
+    }
+
+     // Logout function
+     function logout() {
+        callLogout();
+    }
+
+    function callLogout() {
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetch('http://localhost:8080/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    localStorage.removeItem('token');
+                    window.location.href = "/doLogin";
+                } else {
+                    console.error('Logout failed');
+                }
+            });
+        } else {
+            localStorage.removeItem('token');
+            window.location.href = "/doLogin";
+        }
+    }
+</script>
 </html>

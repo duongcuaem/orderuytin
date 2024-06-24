@@ -62,8 +62,9 @@ public class NotificationController {
         notification.setType("general"); // Thiết lập loại thông báo là chung
         notification.setStatus("unread"); // Thiết lập trạng thái thông báo là chưa đọc
         notification.setCreatedAt(new Date());
+        notification.setFromName("Admin: ");
         // Lưu thông báo vào cơ sở dữ liệu
-        //notificationService.saveNotification(notification, "general");
+        notificationService.saveNotification(notification, "general");
         // Gửi thông báo đến tất cả người dùng
         messagingTemplate.convertAndSend("/all/notifications", notification);
     }
@@ -86,7 +87,7 @@ public class NotificationController {
      */
     @PostMapping("/sendPersonalNotification")
     public void sendPersonalNotification(@RequestBody Notification notification) {
-        //notificationService.sendPersonalNotification(notification);
+        notificationService.sendPersonalNotification(notification);
         // Gửi thông báo đến người dùng qua WebSocket
         messagingTemplate.convertAndSendToUser(notification.getRecipient().toString(), "/specific/notifications", notification);
     }
