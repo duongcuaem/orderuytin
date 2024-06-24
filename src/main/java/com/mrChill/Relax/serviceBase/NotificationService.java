@@ -46,7 +46,7 @@ public class NotificationService {
             }
         }
 
-        notification.setType(type); // Thiết lập loại thông báo là cá nhân
+        notification.setType("1"); // Thiết lập loại thông báo là cá nhân
         notification.setStatus("unread"); // Thiết lập trạng thái thông báo là chưa đọc
         notification.setCreatedAt(new Date());
         if("".equals(currentUser)){

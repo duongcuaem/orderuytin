@@ -82,6 +82,22 @@ public class UserController {
         model.addAttribute("countCancelItemAdmin",is.countCancelItemAdmin());
         return "backend/user/userList";
     }
+    @RequestMapping("notification")
+    public String showUser(Model model) throws Exception {
+        model.addAttribute("allUsers", us.getAllUsers());
+        model.addAttribute("loginUser", us.currentLoginUser());
+        model.addAttribute("countCartItemAdmin",is.countCartItemAdmin());
+        model.addAttribute("countPendingOrderAdmin",is.countPendingItemAdmin());
+        model.addAttribute("countBoughtOrderAdmin",os.countBoughtOrderAdmin());
+        model.addAttribute("countDeliveredOrderAdmin",os.countDeliveredOrderAdmin());
+        model.addAttribute("countArriveredOrderAdmin",os.countArriveredOrderAdmin());
+        model.addAttribute("countFinishedOrderAdmin",os.countFinishedOrderAdmin());
+        model.addAttribute("countCancelOrderAdmin",os.countCancelOrderAdmin());
+        model.addAttribute("countComplainOrderAdmin",os.countComplainOrderAdmin());
+        model.addAttribute("countFixOrderAdmin",os.countFixOrderAdmin());
+        model.addAttribute("countCancelItemAdmin",is.countCancelItemAdmin());
+        return "backend/user/notification";
+    }
     @RequestMapping("resetPassword/{id}")
     public String resetPassword(Model model, @PathVariable Integer id) throws Exception {
         model.addAttribute("User", us.changPass(id));

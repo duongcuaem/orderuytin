@@ -6,8 +6,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <style>
     .notification-popup li {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
     }
 
     .notification-popup li:last-child {
@@ -32,7 +32,58 @@
         color: #333;
     }
 
+    .notification-toast {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background-color: #333;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 1000;
+        display: none;
+    }
+
+    /* Style cho popup thông báo đặc biệt */
+    .special-notification-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        color: black;
+        border: 1px solid #ccc;
+        padding: 20px;
+        z-index: 1000;
+        display: none;
+        border: solid 4px #4d26b2;
+        border-radius: 20px;
+        width: 400px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Style cho header của thông báo đặc biệt */
+    .special-notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Style cho nút đóng */
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #333;
+    }
+
+    /* Style cho phần nội dung thông báo */
+    .special-notification-content {
+        margin-top: 10px;
+    }
 </style>
+
 <nav class="main-nav--bg" style="background-color: black">
     <div class="container main-nav">
         <div class="main-nav-start">
@@ -74,20 +125,28 @@
                     <li id="noNotification" style="display:none;">Không có thông báo</li>
                 </ul>
             </div>
-            
-            
             <div>
                 <!-- Add a logout button -->
-                    <button onclick="logout()" style="color:white;background-color:black;font-size:35px"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="logout()" style="color:white;background-color:black;font-size:35px"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </div>
     <!-- Notification Popup -->
     <div id="notification-new" class="notification-popup"></div>
     <!-- Special Notification Popup -->
-    <div id="specialNotificationPopup" class="special-notification-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:white;color:black;border:1px solid #ccc;padding:20px;z-index:1000;">
-        <p id="specialNotificationText"></p>
-        <button onclick="closeSpecialNotification()">Close</button>
+    <div id="specialNotificationPopup" class="special-notification-popup">
+        <!-- Header của thông báo đặc biệt -->
+        <div class="special-notification-header">
+            <!-- Thông tin người gửi -->
+            <span id="specialNotificationSender"></span>
+            <!-- Nút đóng thông báo -->
+            <button class="close-btn" onclick="closeSpecialNotification()">✖</button>
+        </div>
+        <!-- Thời gian thông báo -->
+        <span id="specialNotificationTime"></span>
+        <br>
+        <!-- Nội dung thông báo -->
+        <p id="specialNotificationText" class="special-notification-content"></p>
     </div>
 
     <div style="display:flex;flex-direction:row;justify-content:space-between;margin:5px;text-align:center;color:white">
@@ -146,6 +205,9 @@
         </div>
     </div>
 </nav>
+
+<div id="notificationToast" class="notification-toast"></div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const token = localStorage.getItem('token');
@@ -176,7 +238,7 @@
                     }
                 }
                 // Lấy thông báo từ DB
-                getNotifications(userItem, 0, 5);
+                getNotifications(userItem, 0, 10);
                 // Kết nối tới WebSocket
                 connect(userItem);
             }).catch(error => {
@@ -271,6 +333,24 @@
     }
 
     function showNotification(notification) {
+        console.log(notification);
+        
+        if (notification.type == "1") {
+            // Hiển thị thông báo đặc biệt ở giữa màn hình
+            document.getElementById('specialNotificationSender').innerText = notification.fromName; // Thông tin người gửi
+            document.getElementById('specialNotificationTime').innerText = new Date(notification.createdAt).toLocaleString(); // Thời gian thông báo
+            document.getElementById('specialNotificationText').innerText = notification.message; // Nội dung thông báo
+            document.getElementById('specialNotificationPopup').style.display = 'block';
+        } else {
+            // Hiển thị thông báo ở góc dưới phải màn hình
+            const notificationToast = document.getElementById('notificationToast');
+            notificationToast.innerText = notification.message;
+            notificationToast.style.display = 'block';
+            setTimeout(() => {
+                notificationToast.style.display = 'none';
+            }, 5000);
+        }
+        
         const notificationList = document.getElementById('notificationList');
         const noNotification = document.getElementById('noNotification');
         
@@ -284,9 +364,9 @@
         const notificationHeader = document.createElement('div');
         notificationHeader.classList.add('notification-header');
         const sender = document.createElement('span');
-        sender.innerText = notification.fromName; // Assuming the notification object has a sender field
+        sender.innerText = notification.fromName; // Thông tin người gửi
         const time = document.createElement('span');
-        time.innerText = new Date(notification.createdAt).toLocaleString(); // Assuming the notification object has a timestamp field
+        time.innerText = new Date(notification.createdAt).toLocaleString(); // Thời gian thông báo
         notificationHeader.appendChild(sender);
         notificationHeader.appendChild(time);
 
@@ -302,20 +382,12 @@
         document.getElementById('notificationCount').innerText = count + 1;
     }
 
-    document.getElementById('notificationIcon').addEventListener('mouseover', function() {
-        document.getElementById('notificationPopup').style.display = 'block';
-    });
-
-    document.getElementById('notificationIcon').addEventListener('mouseout', function() {
-        document.getElementById('notificationPopup').style.display = 'none';
-    });
-
     function closeSpecialNotification() {
         document.getElementById('specialNotificationPopup').style.display = 'none';
     }
 
-     // Logout function
-     function logout() {
+    // Logout function
+    function logout() {
         callLogout();
     }
 
@@ -342,4 +414,3 @@
         }
     }
 </script>
-

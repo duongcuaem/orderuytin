@@ -34,7 +34,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="users-02.html"><span class="icon message" aria-hidden="true"></span>Thông báo
+                            <a href="/backend/user/notification"><span class="icon message" aria-hidden="true"></span>Thông báo
                                 <span class="category__btn transparent-btn" title="Open list"></span>
                             </a>
                         </li>

@@ -87,6 +87,8 @@ public class NotificationController {
      */
     @PostMapping("/sendPersonalNotification")
     public void sendPersonalNotification(@RequestBody Notification notification) {
+        
+        notification.setType("1");
         notificationService.sendPersonalNotification(notification);
         // Gửi thông báo đến người dùng qua WebSocket
         messagingTemplate.convertAndSendToUser(notification.getRecipient().toString(), "/specific/notifications", notification);

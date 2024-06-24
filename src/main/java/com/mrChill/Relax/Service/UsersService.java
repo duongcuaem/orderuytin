@@ -96,6 +96,12 @@ public class UsersService {
 	public List<Users>  list (){
 		return ur.findByRoleNotContainsIgnoreCase("ROLE_ADMIN"); }
 
+	public List<Users>  getAllUsers(){
+
+		return ur.findAll();
+	}
+
+
 	public List<UserDto> sumTotal (){
 		List<UserDto3> listWayBills = ur.sumTotal3();
 		List<UserDto2> listCharg = ur.sumTotal2();

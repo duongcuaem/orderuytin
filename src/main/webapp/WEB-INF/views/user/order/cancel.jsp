@@ -9,6 +9,85 @@
     <link rel="shortcut icon" type="image/x-icon" href="/orderuytin/orderuytin.jpg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        .notification-popup li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+    
+        .notification-popup li:last-child {
+            border-bottom: none;
+        }
+    
+        .notification-popup .notification-item {
+            display: flex;
+            flex-direction: column;
+        }
+    
+        .notification-popup .notification-item .notification-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+    
+        .notification-popup .notification-item .notification-body {
+            margin-top: 5px;
+            font-size: 16px;
+            color: #333;
+        }
+    
+        .notification-toast {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+    
+        /* Style cho popup thông báo đặc biệt */
+        .special-notification-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: black;
+            border: 1px solid #ccc;
+            padding: 20px;
+            z-index: 1000;
+            display: none;
+            border: solid 4px #4d26b2;
+            border-radius: 20px;
+            width: 400px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    
+        /* Style cho header của thông báo đặc biệt */
+        .special-notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    
+        /* Style cho nút đóng */
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333;
+        }
+    
+        /* Style cho phần nội dung thông báo */
+        .special-notification-content {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body style="background-color: black">
 <!-- ! Body -->
@@ -45,12 +124,12 @@
                         </a>
                     </div>
                     <div style="color:white;font-size:35px;position:relative;">
-						<p style="color:red;font-size:15px;float:right" id="notificationCount">0</p>
-						<i id="notificationIcon" class="fa-solid fa-bell"></i>
-						<ul id="notificationList" class="notification-popup" style="display:none;position:absolute;top:40px;right:0;background-color:white;color:black;border:1px solid #ccc;padding:100px;list-style:none;z-index:1000;">
-							<!-- Notification items will be appended here -->
-						</ul>
-					</div>
+                        <p style="color:red;font-size:15px;float:right" id="notificationCount">0</p>
+                        <i id="notificationIcon" class="fa-solid fa-bell"></i>
+                        <ul id="notificationList" class="notification-popup" style="display:none;position:absolute;top:40px;right:0;background-color:white;color:black;border:1px solid #ccc;padding:10px;list-style:none;z-index:1000;width:300px;">
+                            <li id="noNotification" style="display:none;">Không có thông báo</li>
+                        </ul>
+                    </div>
                     <div >
                         <!-- Add a logout button -->
                         <form:form action="/logout"   method="POST">
@@ -60,12 +139,22 @@
                 </div>
             </div>
             <!-- Notification Popup -->
-			<div id="notification-new" class="notification-popup"></div>
-			<!-- Special Notification Popup -->
-			<div id="specialNotificationPopup" class="special-notification-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:white;color:black;border:1px solid #ccc;padding:20px;z-index:1000;">
-				<p id="specialNotificationText"></p>
-				<button onclick="closeSpecialNotification()">Close</button>
-			</div>
+            <div id="notification-new" class="notification-popup"></div>
+            <!-- Special Notification Popup -->
+            <div id="specialNotificationPopup" class="special-notification-popup">
+                <!-- Header của thông báo đặc biệt -->
+                <div class="special-notification-header">
+                    <!-- Thông tin người gửi -->
+                    <span id="specialNotificationSender"></span>
+                    <!-- Nút đóng thông báo -->
+                    <button class="close-btn" onclick="closeSpecialNotification()">✖</button>
+                </div>
+                <!-- Thời gian thông báo -->
+                <span id="specialNotificationTime"></span>
+                <br>
+                <!-- Nội dung thông báo -->
+                <p id="specialNotificationText" class="special-notification-content"></p>
+            </div>
             <div style="display:flex;flex-direction:row;justify-content:space-between;margin:5px;text-align:center;color:white">
                 <div>
                     <p style="font-size:15px;float:right">${countWholeOrder}</p> </br><a style="font-size:15px;" href="/user/order/whole">Tất cả</a>
@@ -241,12 +330,12 @@
                     userItem = data.socialcode;
                 } else {
                     if (data.userId != null) {
-                        localStorage.setItem('userId', data.userId);
-                        userItem = data.userId;
+                        localStorage.setItem('userId', data.userName);
+                        userItem = data.userName;
                     }
                 }
                 // Lấy thông báo từ DB
-                getNotifications(userItem, 0, 5);
+                getNotifications(userItem, 0, 10);
                 // Kết nối tới WebSocket
                 connect(userItem);
             }).catch(error => {
@@ -281,7 +370,7 @@
             });
 
             // Đăng ký để nhận thông báo từ kênh specific cho người dùng cụ thể (thông báo cá nhân)
-            stompClient.subscribe('/user/specific/notifications/' + userItem, function (messageOutput) {
+            stompClient.subscribe('/user/specific/notifications' , function (messageOutput) {
                 showNotification(JSON.parse(messageOutput.body));
             });
         });
@@ -308,44 +397,94 @@
 
     function displayNotifications(notifications) {
         const notificationList = document.getElementById('notificationList');
+        const noNotification = document.getElementById('noNotification');
+
         notificationList.innerHTML = '';
-        notifications.forEach(notification => {
-            const notificationItem = document.createElement('li');
-            notificationItem.innerText = notification.message;
-            notificationList.appendChild(notificationItem);
-        });
+        if (notifications.length === 0) {
+            noNotification.style.display = 'block';
+        } else {
+            noNotification.style.display = 'none';
+            notifications.forEach(notification => {
+                const notificationItem = document.createElement('li');
+                notificationItem.classList.add('notification-item');
+                
+                const notificationHeader = document.createElement('div');
+                notificationHeader.classList.add('notification-header');
+                const sender = document.createElement('span');
+                sender.innerText = notification.sender; // Assuming the notification object has a sender field
+                const time = document.createElement('span');
+                time.innerText = new Date(notification.createdAt).toLocaleString(); // Assuming the notification object has a timestamp field
+                notificationHeader.appendChild(sender);
+                notificationHeader.appendChild(time);
+                
+                const notificationBody = document.createElement('div');
+                notificationBody.classList.add('notification-body');
+                notificationBody.innerText = notification.message;
+                
+                notificationItem.appendChild(notificationHeader);
+                notificationItem.appendChild(notificationBody);
+                notificationList.appendChild(notificationItem);
+            });
+        }
         document.getElementById('notificationCount').innerText = notifications.length;
     }
 
     function showNotification(notification) {
-        if (notification.isSpecial) {
-            document.getElementById('specialNotificationText').innerText = notification.message;
+        console.log(notification);
+        
+        if (notification.type == "1") {
+            // Hiển thị thông báo đặc biệt ở giữa màn hình
+            document.getElementById('specialNotificationSender').innerText = notification.fromName; // Thông tin người gửi
+            document.getElementById('specialNotificationTime').innerText = new Date(notification.createdAt).toLocaleString(); // Thời gian thông báo
+            document.getElementById('specialNotificationText').innerText = notification.message; // Nội dung thông báo
             document.getElementById('specialNotificationPopup').style.display = 'block';
         } else {
-            const notificationList = document.getElementById('notificationList');
-            const notificationItem = document.createElement('li');
-            notificationItem.innerText = notification.message;
-            notificationList.appendChild(notificationItem);
-
-            let count = parseInt(document.getElementById('notificationCount').innerText);
-            document.getElementById('notificationCount').innerText = count + 1;
+            // Hiển thị thông báo ở góc dưới phải màn hình
+            const notificationToast = document.getElementById('notificationToast');
+            notificationToast.innerText = notification.message;
+            notificationToast.style.display = 'block';
+            setTimeout(() => {
+                notificationToast.style.display = 'none';
+            }, 5000);
         }
+        
+        const notificationList = document.getElementById('notificationList');
+        const noNotification = document.getElementById('noNotification');
+        
+        if (noNotification) {
+            noNotification.style.display = 'none';
+        }
+
+        const notificationItem = document.createElement('li');
+        notificationItem.classList.add('notification-item');
+
+        const notificationHeader = document.createElement('div');
+        notificationHeader.classList.add('notification-header');
+        const sender = document.createElement('span');
+        sender.innerText = notification.fromName; // Thông tin người gửi
+        const time = document.createElement('span');
+        time.innerText = new Date(notification.createdAt).toLocaleString(); // Thời gian thông báo
+        notificationHeader.appendChild(sender);
+        notificationHeader.appendChild(time);
+
+        const notificationBody = document.createElement('div');
+        notificationBody.classList.add('notification-body');
+        notificationBody.innerText = notification.message;
+
+        notificationItem.appendChild(notificationHeader);
+        notificationItem.appendChild(notificationBody);
+        notificationList.appendChild(notificationItem);
+
+        let count = parseInt(document.getElementById('notificationCount').innerText);
+        document.getElementById('notificationCount').innerText = count + 1;
     }
-
-    // document.getElementById('notificationIcon').addEventListener('mouseover', function() {
-    //     document.getElementById('notificationPopup').style.display = 'block';
-    // });
-
-    // document.getElementById('notificationIcon').addEventListener('mouseout', function() {
-    //     document.getElementById('notificationPopup').style.display = 'none';
-    // });
 
     function closeSpecialNotification() {
         document.getElementById('specialNotificationPopup').style.display = 'none';
     }
 
-     // Logout function
-     function logout() {
+    // Logout function
+    function logout() {
         callLogout();
     }
 
