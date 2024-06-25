@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.mrChill.Relax.entity.Notification;
@@ -21,11 +22,15 @@ public class NotificationService {
     // Tự động liên kết với NotificationRepository
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+    
     /**
      * Phương thức lưu thông báo vào cơ sở dữ liệu
      * @param notification Đối tượng Notification cần lưu
      */
-    public void saveNotification(Notification notification, String type) {
+    public void saveNotification(Notification notification) {
         // Lấy thông tin người dùng hiện tại
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUser = "";
@@ -45,9 +50,6 @@ public class NotificationService {
                 currentUserId = Long.parseLong((String) attributes.getOrDefault("sub", null));
             }
         }
-
-        notification.setType("1"); // Thiết lập loại thông báo là cá nhân
-        notification.setStatus("unread"); // Thiết lập trạng thái thông báo là chưa đọc
         notification.setCreatedAt(new Date());
         if("".equals(currentUser)){
             notification.setFromName("Admin: ");
@@ -56,6 +58,8 @@ public class NotificationService {
         }
         notification.setCreatedBy(currentUserId);
         notificationRepository.save(notification);
+        // Gửi thông báo đến người dùng qua WebSocket
+        messagingTemplate.convertAndSendToUser(notification.getRecipient().toString(), "/specific/notifications", notification);
     }
 
     /**
@@ -95,7 +99,7 @@ public class NotificationService {
      * @param notification Đối tượng thông báo cần gửi
      * @param userId ID của người nhận thông báo
      */
-    public void sendPersonalNotification(Notification notification) {
-        saveNotification(notification, "personal");
-    }
+    // public void sendPersonalNotification(Notification notification) {
+    //     saveNotification(notification);
+    // }
 }

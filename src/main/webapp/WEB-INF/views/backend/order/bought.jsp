@@ -54,7 +54,7 @@
 					<input type="text"  name="receivedDate"  value="${sbol.receivedDate}"    path="receivedDate" />
 					<input type="text"  name="orderUserName" value="${sbol.orderUserName}"   path="orderUserName" />
 				</div>
-				<div style="display:flex;flex-direction:row;justify-content: space-between;mararrivergin:10px">
+				<div style="display:flex;flex-direction:row;justify-content: space-between; margin:10px">
 					<div style="display:flex;flex-direction:column" >
 						<div style="margin:5px">
 							<input type="text" name="wayBillCode" style="width:170px" placeholder="Hãy điền mã vận đơn"  path="wayBillCode"/>

@@ -52,7 +52,6 @@
                                         <input type="checkbox" class="userCheckbox" value="${user.socialcode}" onchange="updateRecipientList()">
                                     </c:if>
                                 </td>
-                                <!-- <td style="text-align:center;"><input type="checkbox" class="userCheckbox" value="${user.userId}" onchange="updateRecipientList()"></td> -->
                                 <td>${user.userName}</td>
                                 <td>${user.email}</td>
                                 <td>${user.phone}</td>
@@ -102,13 +101,6 @@
         </div>
     </div>
 
-    <!-- Chart library -->
-    <!-- <script src="/plugins/chart.min.js"></script> -->
-    <!-- Icons library -->
-    <!-- <script src="/plugins/feather.min.js"></script> -->
-    <!-- Custom scripts -->
-    <!-- <script src="/js/script.js"></script> -->
-
     <script>
         function showNotificationModal() {
             document.getElementById('notificationModal').style.display = 'block';
@@ -133,36 +125,46 @@
             document.getElementById('notificationRecipientList').value = recipientList;
         }
 
-        document.getElementById('notificationForm').addEventListener('submit', function(event) {
+        document.getElementById('notificationForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
-            const recipientList = document.getElementById('notificationRecipientList').value;
+            const recipientList = document.getElementById('notificationRecipientList').value.split(',').map(recipient => recipient.trim());
             const content = document.getElementById('notificationContent').value;
             const type = document.getElementById('notificationType').value;
 
             const notification = {
-                recipientList: recipientList,
-                content: content,
-                type: type
+                recipients: recipientList,
+                message: content,
+                type: type,
+                status: 'unread'
             };
 
-            // Gửi thông báo thông qua AJAX hoặc Fetch API
-            fetch('/backend/sendNotification', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(notification)
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                const response = await fetch('http://localhost:8080/backend/sendPersonalNotification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(notification)
+                });
+                console.log('Response status:', response.status);
+                console.log('Response:', response);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status:`);
+                }
                 alert('Thông báo đã được gửi thành công!');
+                resetNotificationForm();
                 closeNotificationModal();
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Có lỗi xảy ra khi gửi thông báo:', error);
-            });
+                alert('Có lỗi xảy ra khi gửi thông báo. Vui lòng thử lại sau.');
+            }
         });
+
+        function resetNotificationForm() {
+            document.getElementById('notificationForm').reset();
+            document.getElementById('notificationRecipientList').value = '';
+        }
     </script>
 
 </body>
