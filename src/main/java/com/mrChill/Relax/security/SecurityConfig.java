@@ -56,7 +56,7 @@ public class SecurityConfig {
             .authorizeRequests(authorizeRequests -> 
                 authorizeRequests
                     .mvcMatchers("/", "/ws/**", "/user/**", "/app/**", "/login/**", "/home/**","/api/**").permitAll()
-                    // .antMatchers("/backend/**").hasRole("ADMIN")
+                    .antMatchers("/backend/**").hasRole("ADMIN")
                     // .antMatchers("/user/**").hasRole("USER")
                     // .anyRequest().authenticated()
             )
