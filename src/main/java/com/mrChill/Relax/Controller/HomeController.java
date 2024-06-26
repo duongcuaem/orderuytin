@@ -84,6 +84,11 @@ public class HomeController {
         return "login";
     }
 
+    @RequestMapping("logout")
+    public String logout(){
+        return "login";
+    }
+
     @RequestMapping("notification")
     public String notification( ){ return "notification"; }
 

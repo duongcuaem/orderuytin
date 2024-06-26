@@ -105,7 +105,7 @@
                 <div class="search-wrapper" style="display:flex;flex-direction:row">
                     <i data-feather="search" aria-hidden="true"></i>
                     <input type="text" name="search" placeholder="Bạn muốn tìm kiếm gì? ..." required>
-                    <button type="submit" style="border-radius:5px;padding:2px;color:white;background-color:black;boder-radius:10px;border-style:solid;border-width: thin;border-color:white"> Tìm kiếm </button>
+                    <button type="submit" style="border-radius:5px;padding:2px;color:white;background-color:black;border-radius:10px;border-style:solid;border-width: thin;border-color:white"> Tìm kiếm </button>
                 </div>
             </form>
         </div>

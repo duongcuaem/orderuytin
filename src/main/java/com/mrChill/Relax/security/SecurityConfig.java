@@ -178,7 +178,7 @@ public class SecurityConfig {
             @Override
             public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
                 // Xử lý khi logout thành công
-                response.sendRedirect("/login?logout");
+                response.sendRedirect("/doLogin?logout");
             }
         };
     }
