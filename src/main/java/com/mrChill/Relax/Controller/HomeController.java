@@ -309,7 +309,7 @@ public class HomeController {
         if ("ROLE_ADMIN".equals(users.getRole())) {
             return ResponseEntity.ok("/backend/home");
         } else {
-            return ResponseEntity.ok("/user/home");
+            return ResponseEntity.ok("/shop/products");
         }
     }
 }
