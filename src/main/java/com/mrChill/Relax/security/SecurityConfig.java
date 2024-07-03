@@ -131,6 +131,8 @@ public class SecurityConfig {
                 // nếu tồn tại rồi thì lấy dữ liệu ra 
                 
                 String jwt = jwtUtil.generateToken(userPrincipal);
+                // xử lý trả về cho điện thoại logic ở đây
+                
                 response.sendRedirect("/loginSuccess?token=" + jwt);
             }
         };

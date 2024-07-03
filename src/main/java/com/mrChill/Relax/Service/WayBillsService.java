@@ -3,14 +3,19 @@ package com.mrChill.Relax.Service;
 import com.mrChill.Relax.Dao.OrdersDAO;
 import com.mrChill.Relax.Dao.WayBillsDAO;
 import com.mrChill.Relax.Repository.OrdersRepository;
+import com.mrChill.Relax.Repository.UsersRepository;
 import com.mrChill.Relax.Repository.WayBillsRepository;
 import com.mrChill.Relax.entities.Orders;
+import com.mrChill.Relax.entities.Users;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.mrChill.Relax.entities.WayBills;
+import com.mrChill.Relax.entity.Notification;
+import com.mrChill.Relax.serviceBase.NotificationService;
 
 import java.util.Date;
 import java.util.List;
@@ -29,6 +34,12 @@ public class WayBillsService {
 
     @Autowired
     UsersService us;
+
+    @Autowired
+    UsersRepository ur;
+
+    @Autowired
+    NotificationService notificationService;
 
 	public void saveWayBill (OrdersDAO ordersDAO,WayBillsDAO wayBillsDAO){
           Orders ordersEntity = ordersDAO.convertToEntity();
@@ -58,6 +69,7 @@ public class WayBillsService {
         WayBills wayBillsEntity = wayBillsDAO.convertToEntity();
         Orders order = or.findById(wayBillsEntity.getOrderId()).orElse(null);
         order.setOrderStatus("Da ve kho");
+        sendNotificationToUser("Đã về kho", wayBillsEntity.getWbUserName());
         or.save(order);
         wayBillsEntity.setOrders(order);
         wbr.save(wayBillsEntity);
@@ -112,4 +124,24 @@ public class WayBillsService {
         Timer timer = new Timer();
         timer.schedule(changeStatus(), 604800000);
     }
+
+    private void sendNotificationToUser(String message, String userName) {
+        Users user = ur.findByUserName(userName);
+        Notification notification = new Notification();
+
+        if (user != null) {
+            if (user.getSocialcode() != null) {
+                notification.setRecipient(user.getSocialcode());
+            }else{
+                notification.setRecipient(userName);
+            }
+            notification.setFromName(us.currentLoginUser().getUserName());
+            notification.setMessage(message);
+            notification.setCreatedAt(new Date());
+            notification.setType("1");
+            notification.setStatus("unread");
+            notificationService.saveNotification(notification);
+        }
+    }
+
 }

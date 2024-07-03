@@ -51,7 +51,7 @@
             type: "general",
             status: "unread"
         };
-        fetch('http://localhost:8080/notifyAll', {
+        fetch('/notifyAll', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -77,7 +77,7 @@
             type: "1",
             status: "unread"
         };
-        fetch('http://localhost:8080/sendPersonalNotification', {
+        fetch('/sendPersonalNotification', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

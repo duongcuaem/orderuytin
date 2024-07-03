@@ -95,7 +95,7 @@
         const token = localStorage.getItem('token');
         console.log(token);
         if (token) {
-            var url = "http://localhost:8080/userRedirection";
+            var url = "/userRedirection";
             fetchDetailWithToken(url, token);
         }
 

@@ -140,7 +140,7 @@
             };
 
             try {
-                const response = await fetch('http://localhost:8080/backend/sendPersonalNotification', {
+                const response = await fetch('/backend/sendPersonalNotification', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

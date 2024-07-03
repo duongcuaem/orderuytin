@@ -110,7 +110,7 @@ public class NotificationController {
                 notification.setStatus(notificationRequestDTO.getStatus());
                 notificationService.saveNotification(notification);
                 // Gửi thông báo đến người dùng qua WebSocket
-                messagingTemplate.convertAndSendToUser(notification.getRecipient().toString(), "/specific/notifications", notification);
+                //messagingTemplate.convertAndSendToUser(notification.getRecipient().toString(), "/specific/notifications", notification);
             } catch (Exception e) {
                 // Log the error
                 System.err.println("Error sending notification to recipient: " + recipient);

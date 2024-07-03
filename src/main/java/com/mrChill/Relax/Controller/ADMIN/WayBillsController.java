@@ -1,8 +1,6 @@
 package com.mrChill.Relax.Controller.ADMIN;
 
-import com.mrChill.Relax.Dao.ItemDAO;
 import com.mrChill.Relax.Dao.OrdersDAO;
-import com.mrChill.Relax.Dao.ResponseDAO;
 import com.mrChill.Relax.Dao.WayBillsDAO;
 import com.mrChill.Relax.Repository.OrdersRepository;
 import com.mrChill.Relax.Repository.UsersRepository;
@@ -10,26 +8,17 @@ import com.mrChill.Relax.Service.ItemService;
 import com.mrChill.Relax.Service.OrdersService;
 import com.mrChill.Relax.Service.UsersService;
 import com.mrChill.Relax.Service.WayBillsService;
-import com.mrChill.Relax.entities.Item;
-import com.mrChill.Relax.entities.Orders;
-import com.mrChill.Relax.entities.Users;
-import com.mrChill.Relax.entities.WayBills;
-import com.mrChill.Relax.entity.Notification;
 import com.mrChill.Relax.serviceBase.NotificationService;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.util.Date;
-import java.util.List;
 
 
 @Controller
@@ -68,7 +57,6 @@ public class WayBillsController {
         if(ordersDAO.getOrderStatus().equals("Da ve kho")){
             wbs.saveWayBill(ordersDAO,waybillsDAO);
             model.addFlashAttribute("message","更新运费成功.");
-            sendNotificationToUser("Đã về kho", ordersDAO.getOrderUserName());
             return "redirect:/backend/order/deliveried" ;
         }
         if(ordersDAO.getOrderStatus().equals("Huy")){
@@ -76,7 +64,6 @@ public class WayBillsController {
             ordersDAO.setCancelDate(today);
             os.saveOrder(ordersDAO);
             model.addFlashAttribute("message","已删除订单.");
-            sendNotificationToUser("Hủy", ordersDAO.getOrderUserName());
             return "redirect:/backend/order/bought" ;
         }
         if(bindingResult.hasErrors()){
@@ -129,24 +116,7 @@ public class WayBillsController {
         return "redirect:/backend/order/deliveried" ;
     }
 
-    private void sendNotificationToUser(String message, String userName) {
-        Users user = ur.findByUserName(userName);
-        Notification notification = new Notification();
-
-        if (user != null) {
-            if (user.getSocialcode() != null) {
-                notification.setRecipient(user.getSocialcode());
-            }else{
-                notification.setRecipient(userName);
-            }
-            notification.setFromName(us.currentLoginUser().getUserName());
-            notification.setMessage(message);
-            notification.setCreatedAt(new Date());
-            notification.setType("1");
-            notificationService.saveNotification(notification);
-        }
-    }
-
+    
 
 
 }

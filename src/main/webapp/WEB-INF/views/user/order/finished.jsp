@@ -353,7 +353,7 @@
         if (!token) {
             window.location.href = '/doLogin';
         } else {
-            fetch('http://localhost:8080/api/me', {
+            fetch('/api/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Token ` + token
@@ -423,7 +423,7 @@
     async function getNotifications(recipient, page, size) {
         console.log("recipient: " + recipient + " page: " + page + " size: " + size);
         try {
-            const url = "http://localhost:8080/notifications?recipient=" + recipient + "&page=" + page + "&size=" + size;
+            const url = "/notifications?recipient=" + recipient + "&page=" + page + "&size=" + size;
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -533,7 +533,7 @@
     function callLogout() {
         const token = localStorage.getItem('token');
         if (token) {
-            fetch('http://localhost:8080/api/logout', {
+            fetch('/api/logout', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + token,

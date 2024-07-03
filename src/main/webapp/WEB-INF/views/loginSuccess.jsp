@@ -38,7 +38,7 @@
     async function userRedirection(token) {
         console.log(token);
         try {
-            const url = "http://localhost:8080/userRedirection";
+            const url = "/userRedirection";
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
