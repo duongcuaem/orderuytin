@@ -3,6 +3,9 @@ package com.mrChill.Relax.entities;
 import lombok.*;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import java.util.Date;
 
 @Entity
@@ -21,14 +24,15 @@ public class ChargMoney extends EntityBase {
     @Column(name = "userId")
     public Integer userId;
 
-//    @Transient
+    // @Transient
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="userId", insertable = false, updatable = false)
+    @JoinColumn(name = "userId", insertable = false, updatable = false)
+    @JsonBackReference
     public Users users;
 
     @Basic
     @Column(name = "amount")
-    public Double amount ;
+    public Double amount;
 
     @Basic
     @Column(name = "note")

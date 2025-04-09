@@ -1,18 +1,19 @@
 package com.mrChill.Relax.entities;
+
 import java.util.*;
 import javax.persistence.*;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Table(name = "users")
 public class Users extends EntityBase {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,20 +26,20 @@ public class Users extends EntityBase {
 	public String userName;
 
 	@Basic
-	@Column(name = "social_code",  unique = true)
-    private String socialcode;
+	@Column(name = "social_code", unique = true)
+	private String socialcode;
 
 	@Basic
 	@Column(name = "rate")
-	public Integer rate ;
+	public Integer rate;
 
 	@Basic
 	@Column(name = "rateKg")
-	public Integer rateKg ;
+	public Integer rateKg;
 
 	@Basic
 	@Column(name = "rateM3")
-	public Integer rateM3 ;
+	public Integer rateM3;
 
 	@Basic
 	@Column(name = "address")
@@ -59,9 +60,9 @@ public class Users extends EntityBase {
 	@Basic
 	@Column(name = "password")
 	public String password;
-	
-    @Basic
-    @Column(name = "rePassword")
+
+	@Basic
+	@Column(name = "rePassword")
 	public String rePassword;
 
 	@Basic
@@ -69,6 +70,7 @@ public class Users extends EntityBase {
 	public Integer STATUS;
 
 	@OneToMany(mappedBy = "userId")
+	@JsonManagedReference
 	public List<ChargMoney> chargMoneyList;
 
 }
